@@ -1,5 +1,3 @@
-"use client";
-
 import { LoginForm } from "@/ui/sections/auth/login-form";
 import { AuthLayout } from "@/ui/shared/layouts/auth-layout";
 

@@ -6,15 +6,20 @@ import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import {
+  signupSchema,
+  type SignupSchemaInput,
+} from "@/adapters/validation/auth-validation";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export function SignupForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const form = useForm({
+  const form = useForm<SignupSchemaInput>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -29,11 +34,15 @@ export function SignupForm() {
     setIsLoading(true);
 
     try {
+      router.push("/");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setIsLoading(false);
+    } finally {
       setIsLoading(false);
     }
   };
+
+  console.log(form.formState.errors);
 
   return (
     <Form {...form}>
@@ -88,14 +97,8 @@ export function SignupForm() {
             className="w-full h-11 text-base font-medium"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              "Sign up"
-            )}
+            {isLoading ? <Loader2 className="size-4 animate-spin" /> : <></>}
+            {isLoading ? "Creating account..." : "Sign up"}
           </Button>
         </div>
       </form>
