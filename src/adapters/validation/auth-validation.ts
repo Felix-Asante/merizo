@@ -6,25 +6,28 @@ import {
 } from "./validation-helpers";
 
 export const loginSchema = z.object({
-  email: z.email(INPUT_REQUIRED_INVALID_ERROR_MESSAGE),
+  email: z.email(INPUT_REQUIRED_INVALID_ERROR_MESSAGE).trim(),
   password: z
     .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
-    .regex(REGEX_PATTERNS.Password, INPUT_REQUIRED_INVALID_ERROR_MESSAGE),
+    .regex(REGEX_PATTERNS.Password, INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+    .trim(),
 });
 
 export const signupSchema = z
   .object({
     name: z
       .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
-      .min(1, INPUT_REQUIRED_INVALID_ERROR_MESSAGE_MIN_LENGTH)
-      .regex(REGEX_PATTERNS.Names, INPUT_REQUIRED_INVALID_ERROR_MESSAGE),
-    email: z.email(INPUT_REQUIRED_INVALID_ERROR_MESSAGE),
+      .regex(REGEX_PATTERNS.Names, INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .trim(),
+    email: z.email(INPUT_REQUIRED_INVALID_ERROR_MESSAGE).trim(),
     password: z
       .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
-      .regex(REGEX_PATTERNS.Password, INPUT_REQUIRED_INVALID_ERROR_MESSAGE),
+      .regex(REGEX_PATTERNS.Password, INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .trim(),
     confirmPassword: z
       .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
-      .regex(REGEX_PATTERNS.Password, INPUT_REQUIRED_INVALID_ERROR_MESSAGE),
+      .regex(REGEX_PATTERNS.Password, INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .trim(),
   })
   .superRefine((data, ctx) => {
     if (data.password !== data.confirmPassword) {

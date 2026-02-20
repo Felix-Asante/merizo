@@ -46,7 +46,8 @@ export function SignupForm() {
       } else {
         toast.error("Something went wrong. Please try again.");
       }
-      logger.error("Failed to sign up", err as Error, { data });
+      const { name, email } = data;
+      logger.error("Failed to sign up", err as Error, { name, email });
     } finally {
       setIsLoading(false);
     }
@@ -58,12 +59,23 @@ export function SignupForm() {
         onSubmit={form.handleSubmit(handleSubmit)}
         className="gap-5 grid sm:grid-cols-2"
       >
-        <FormInput name="name" label="Name" placeholder="Full Name" />
-        <FormInput name="email" label="Email" placeholder="Email" />
+        <FormInput
+          name="name"
+          label="Name"
+          placeholder="Full Name"
+          autoComplete="name"
+        />
+        <FormInput
+          name="email"
+          label="Email"
+          placeholder="Email"
+          autoComplete="email"
+        />
         <FormInput
           name="password"
           label="Password"
           placeholder="Password"
+          autoComplete="new-password"
           type={showPassword ? "text" : "password"}
           endContent={
             <button
@@ -83,6 +95,7 @@ export function SignupForm() {
           name="confirmPassword"
           label="Confirm Password"
           placeholder="Confirm Password"
+          autoComplete="new-password"
           type={showConfirmPassword ? "text" : "password"}
           endContent={
             <button

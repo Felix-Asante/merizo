@@ -43,7 +43,8 @@ export function LoginForm() {
       } else {
         toast.error("Something went wrong. Please try again.");
       }
-      logger.error("Failed to login", err as Error, { data });
+      const { email } = data;
+      logger.error("Failed to login", err as Error, { email });
     } finally {
       setIsLoading(false);
     }
@@ -56,6 +57,7 @@ export function LoginForm() {
           name="email"
           label="Email"
           placeholder="Email"
+          autoComplete="email"
           startContent={
             <MailIcon className="size-4 text-muted-foreground pointer-events-none" />
           }
@@ -64,6 +66,7 @@ export function LoginForm() {
           name="password"
           label="Password"
           placeholder="Password"
+          autoComplete="current-password"
           startContent={
             <LockIcon className="size-4 text-muted-foreground pointer-events-none" />
           }
