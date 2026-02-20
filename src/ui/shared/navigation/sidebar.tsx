@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/ui/utils";
 import { AppBrand } from "@/ui/shared/app-brand";
 import { UserAvatar } from "@/ui/shared/avatar";
-import { Button } from "@/ui/base/button";
+import { Button, buttonVariants } from "@/ui/base/button";
 import { Separator } from "@/ui/base/separator";
 
 const navItems = [
@@ -34,10 +34,13 @@ export function Sidebar() {
         <AppBrand />
       </div>
 
-      <Button className="w-full mb-6 h-11">
+      <Link
+        href="/expenses"
+        className={buttonVariants({ className: "w-full mb-6 h-11" })}
+      >
         <PlusIcon className="size-4" />
         Add Expense
-      </Button>
+      </Link>
 
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
