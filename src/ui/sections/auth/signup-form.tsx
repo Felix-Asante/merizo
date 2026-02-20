@@ -13,6 +13,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { authService } from "@/services/auth/auth-service";
+import { Logger } from "@/lib/logger";
+
+const logger = new Logger("SignupForm");
 
 export function SignupForm() {
   const router = useRouter();
@@ -43,6 +46,7 @@ export function SignupForm() {
       } else {
         toast.error("Something went wrong. Please try again.");
       }
+      logger.error("Failed to sign up", err as Error, { data });
     } finally {
       setIsLoading(false);
     }
