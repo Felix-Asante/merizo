@@ -8,25 +8,50 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Button } from "@/ui/base/button";
 import Link from "next/link";
+import type { LoginSchemaInput } from "@/adapters/validation/auth-validation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema } from "@/adapters/validation/auth-validation";
+import { toast } from "sonner";
+import { authService } from "@/services/auth/auth-service";
+import { Logger } from "@/lib/logger";
+import { Spinner } from "@/ui/base/spinner";
+
+const logger = new Logger("LoginForm");
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const form = useForm({
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const form = useForm<LoginSchemaInput>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const router = useRouter();
+  const handleSubmit = async (data: LoginSchemaInput) => {
+    setIsLoading(true);
 
-  const handleSubmit = async (data: any) => {
-    console.log(data);
+    try {
+      await authService.login(data);
+      router.push("/");
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+      logger.error("Failed to login", err as Error, { data });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
         <FormInput
           name="email"
           label="Email"
@@ -59,8 +84,13 @@ export function LoginForm() {
         />
 
         <div>
-          <Button type="submit" className="w-full h-11 text-base font-medium">
-            Log in
+          <Button
+            type="submit"
+            className="w-full h-11 text-base font-medium"
+            disabled={isLoading}
+          >
+            {isLoading ? <Spinner /> : <></>}
+            {isLoading ? "Logging in..." : "Log in"}
           </Button>
           <div className="flex justify-center mt-2">
             <Link
