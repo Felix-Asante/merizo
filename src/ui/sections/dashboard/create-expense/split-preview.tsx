@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRightIcon, ChevronDownIcon } from "lucide-react";
 import { cn } from "@/ui/utils";
 import { UserAvatar } from "@/ui/shared/avatar";
-import { calculatePreview } from "@/lib/expense/split-calculator";
+import { calculatePreview } from "@/utils/expense/split-calculator";
 import type { ExpenseFormValues } from "@/adapters/validation/expense-validation";
 import type { Member } from "./types";
 
@@ -63,9 +63,7 @@ export function SplitPreview({ members, currentUserId }: SplitPreviewProps) {
         <span className="text-sm font-medium">
           {payerIsCurrentUser ? "You" : payer?.name} paid
         </span>
-        <span className="ml-auto text-sm font-bold">
-          ${amount.toFixed(2)}
-        </span>
+        <span className="ml-auto text-sm font-bold">${amount.toFixed(2)}</span>
       </div>
 
       <div className="space-y-2">

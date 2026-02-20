@@ -3,6 +3,7 @@ export interface Group {
   name: string;
   membersCount: number;
   balance: number;
+  inviteCode: string;
 }
 
 export interface GroupBalance {
@@ -26,9 +27,9 @@ interface GroupData {
 }
 
 export const DUMMY_GROUPS: Group[] = [
-  { id: "1", name: "Apartment 4B", membersCount: 4, balance: 33.25 },
-  { id: "2", name: "Trip to Barcelona", membersCount: 6, balance: -32.0 },
-  { id: "3", name: "Office Lunch Club", membersCount: 8, balance: 12.75 },
+  { id: "1", name: "Apartment 4B", membersCount: 4, balance: 33.25, inviteCode: "APT4BXQ" },
+  { id: "2", name: "Trip to Barcelona", membersCount: 6, balance: -32.0, inviteCode: "BRCL72K" },
+  { id: "3", name: "Office Lunch Club", membersCount: 8, balance: 12.75, inviteCode: "OLC93MR" },
 ];
 
 export const DUMMY_GROUP_DATA: Record<string, GroupData> = {

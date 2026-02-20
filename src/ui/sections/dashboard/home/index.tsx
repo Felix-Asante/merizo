@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { SummaryBalanceCard } from "./summary-balance-card";
 import { QuickActions } from "./quick-actions";
@@ -8,15 +9,18 @@ import { ActivityFeed } from "./activity-feed";
 import { GroupSwitcher } from "./group-switcher";
 import { NoGroupView } from "./no-group-view";
 import { JoinGroupModal } from "./join-group-modal";
+import { InviteMembersModal } from "@/ui/shared/invite-members-modal";
 import { DashboardShimmer } from "./dashboard-shimmer";
 import { DUMMY_GROUPS, DUMMY_GROUP_DATA, type Group } from "./dummy-data";
 
 export function DashboardHome() {
+  const router = useRouter();
   const [groups, setGroups] = useState<Group[]>(DUMMY_GROUPS);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(
     DUMMY_GROUPS[0]?.id ?? null,
   );
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleGroupChange = useCallback(
@@ -40,16 +44,21 @@ export function DashboardHome() {
       name: `Joined Group (${code})`,
       membersCount: 3,
       balance: 0,
+      inviteCode: code.toUpperCase(),
     };
     setGroups((prev) => [...prev, newGroup]);
     setActiveGroupId(newGroup.id);
   }, []);
 
+  const handleCreateGroup = useCallback(() => {
+    router.push("/groups/create");
+  }, [router]);
+
   if (groups.length === 0) {
     return (
       <>
         <NoGroupView
-          onCreateGroup={() => {}}
+          onCreateGroup={handleCreateGroup}
           onJoinGroup={() => setJoinModalOpen(true)}
         />
         <JoinGroupModal
@@ -61,6 +70,7 @@ export function DashboardHome() {
     );
   }
 
+  const activeGroup = groups.find((g) => g.id === activeGroupId);
   const groupData = activeGroupId ? DUMMY_GROUP_DATA[activeGroupId] : null;
 
   return (
@@ -81,7 +91,7 @@ export function DashboardHome() {
           groups={groups}
           activeGroupId={activeGroupId!}
           onGroupChange={handleGroupChange}
-          onCreateGroup={() => {}}
+          onCreateGroup={handleCreateGroup}
           onJoinGroup={() => setJoinModalOpen(true)}
         />
       </div>
@@ -105,7 +115,10 @@ export function DashboardHome() {
               youOwe={groupData.balance.youOwe}
               youAreOwed={groupData.balance.youAreOwed}
             />
-            <QuickActions />
+            <QuickActions
+              activeGroupId={activeGroupId}
+              onInvite={() => setInviteModalOpen(true)}
+            />
             <ActivityFeed activities={groupData.activities} />
           </motion.div>
         ) : null}
@@ -116,6 +129,15 @@ export function DashboardHome() {
         onClose={() => setJoinModalOpen(false)}
         onJoin={handleJoinGroup}
       />
+
+      {activeGroup && (
+        <InviteMembersModal
+          open={inviteModalOpen}
+          onClose={() => setInviteModalOpen(false)}
+          groupName={activeGroup.name}
+          inviteCode={activeGroup.inviteCode}
+        />
+      )}
     </motion.div>
   );
 }

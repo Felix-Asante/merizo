@@ -8,7 +8,7 @@ import { cn } from "@/ui/utils";
 import { Input } from "@/ui/base/input";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { Tab } from "@/ui/shared/tab";
-import { getSplitTotal } from "@/lib/expense/split-calculator";
+import { getSplitTotal } from "@/utils/expense/split-calculator";
 import type { ExpenseFormValues } from "@/adapters/validation/expense-validation";
 import type { Member, SplitMethod } from "./types";
 
@@ -135,9 +135,7 @@ export function SplitMethodSection({ members }: SplitMethodSectionProps) {
         </motion.div>
       </AnimatePresence>
 
-      {error && (
-        <p className="text-xs text-destructive mt-2">{error}</p>
-      )}
+      {error && <p className="text-xs text-destructive mt-2">{error}</p>}
     </motion.section>
   );
 }
