@@ -203,3 +203,9 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
