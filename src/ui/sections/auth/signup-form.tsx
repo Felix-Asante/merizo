@@ -11,6 +11,8 @@ import {
   type SignupSchemaInput,
 } from "@/adapters/validation/auth-validation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { authService } from "@/services/auth/auth-service";
 
 export function SignupForm() {
   const router = useRouter();
@@ -28,21 +30,23 @@ export function SignupForm() {
     },
   });
 
-  const handleSubmit = async (data: any) => {
-    console.log(data);
-
+  const handleSubmit = async (data: SignupSchemaInput) => {
     setIsLoading(true);
 
     try {
-      router.push("/");
+      await authService.signup(data);
+      toast.success("Account created successfully. You can now log in.");
+      router.push("/login");
     } catch (err) {
-      setIsLoading(false);
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
-  console.log(form.formState.errors);
 
   return (
     <Form {...form}>
