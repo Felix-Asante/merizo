@@ -5,7 +5,7 @@ import { useFormContext } from "react-hook-form";
 import { motion } from "framer-motion";
 import { FormField, FormItem, FormMessage } from "@/ui/base/form";
 import FormInput from "@/ui/shared/inputs/form-input";
-import type { ExpenseFormValues } from "@/adapters/validation/expense-validation";
+import type { ExpenseFormValues } from "@/validation/expense-validation";
 
 export function ExpenseInfoSection() {
   return (

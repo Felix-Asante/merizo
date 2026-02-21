@@ -13,6 +13,7 @@ import { Popover } from "radix-ui";
 import { cn } from "@/ui/utils";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
+import type { UserOrganization } from "@/types/organization";
 
 export interface GroupSwitcherGroup {
   id: string;
@@ -21,7 +22,7 @@ export interface GroupSwitcherGroup {
 }
 
 interface GroupSwitcherProps {
-  groups: GroupSwitcherGroup[];
+  groups: UserOrganization[];
   activeGroupId: string;
   onGroupChange: (groupId: string) => void;
   onCreateGroup: () => void;
@@ -51,7 +52,7 @@ export function GroupSwitcher({
           <div onClick={() => setOpen(true)}>
             <Trigger
               activeGroupName={activeGroup?.name ?? ""}
-              activeGroupMembersCount={activeGroup?.membersCount ?? 0}
+              activeGroupMembersCount={activeGroup?.memberCount ?? 0}
               open={open}
             />
           </div>
@@ -80,7 +81,7 @@ export function GroupSwitcher({
       <div onClick={() => setOpen(true)}>
         <Trigger
           activeGroupName={activeGroup?.name ?? ""}
-          activeGroupMembersCount={activeGroup?.membersCount ?? 0}
+          activeGroupMembersCount={activeGroup?.memberCount ?? 0}
           open={open}
         />
       </div>
@@ -139,7 +140,7 @@ function Trigger(props: TriggerProps) {
 }
 
 interface GroupListProps {
-  groups: GroupSwitcherGroup[];
+  groups: UserOrganization[];
   activeGroupId: string;
   onGroupChange: (groupId: string) => void;
   onCreateGroup: () => void;
@@ -170,7 +171,7 @@ function GroupList(props: GroupListProps) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{group.name}</p>
             <p className="text-xs text-muted-foreground">
-              {group.membersCount} members
+              {group.memberCount} members
             </p>
           </div>
           {group.id === activeGroupId && (

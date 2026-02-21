@@ -10,7 +10,7 @@ import { Input } from "@/ui/base/input";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
-import type { ExpenseFormValues } from "@/adapters/validation/expense-validation";
+import type { ExpenseFormValues } from "@/validation/expense-validation";
 import type { Member } from "./types";
 
 interface PaidBySectionProps {

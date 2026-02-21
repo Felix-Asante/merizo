@@ -11,29 +11,29 @@ import { NoGroupView } from "./no-group-view";
 import { JoinGroupModal } from "./join-group-modal";
 import { InviteMembersModal } from "@/ui/shared/invite-members-modal";
 import { DashboardShimmer } from "./dashboard-shimmer";
-import { DUMMY_GROUPS, DUMMY_GROUP_DATA, type Group } from "./dummy-data";
+import { DUMMY_GROUP_DATA, type Group } from "./dummy-data";
+import { getActiveOrganization } from "@/services/organizations/organization-service-client";
+import type { UserOrganization } from "@/types/organization";
 
-export function DashboardHome() {
+interface DashboardHomeProps {
+  organizations: UserOrganization[];
+}
+export function DashboardHome({ organizations }: DashboardHomeProps) {
   const router = useRouter();
-  const [groups, setGroups] = useState<Group[]>(DUMMY_GROUPS);
-  const [activeGroupId, setActiveGroupId] = useState<string | null>(
-    DUMMY_GROUPS[0]?.id ?? null,
-  );
+
+  const { data: activeOrganization } = getActiveOrganization();
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const handleGroupChange = useCallback(
-    (groupId: string) => {
-      if (groupId === activeGroupId) return;
-      setIsTransitioning(true);
-      setTimeout(() => {
-        setActiveGroupId(groupId);
-        setIsTransitioning(false);
-      }, 250);
-    },
-    [activeGroupId],
-  );
+  const handleGroupChange = useCallback((groupId: string) => {
+    if (groupId === activeOrganization?.id) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      // TODO: set active organization
+      setIsTransitioning(false);
+    }, 250);
+  }, []);
 
   const handleJoinGroup = useCallback(async (code: string) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -46,15 +46,15 @@ export function DashboardHome() {
       balance: 0,
       inviteCode: code.toUpperCase(),
     };
-    setGroups((prev) => [...prev, newGroup]);
-    setActiveGroupId(newGroup.id);
+    // TODO: add new organization
+    // TODO: set active organization
   }, []);
 
   const handleCreateGroup = useCallback(() => {
     router.push("/groups/create");
   }, [router]);
 
-  if (groups.length === 0) {
+  if (organizations.length === 0) {
     return (
       <>
         <NoGroupView
@@ -70,8 +70,10 @@ export function DashboardHome() {
     );
   }
 
-  const activeGroup = groups.find((g) => g.id === activeGroupId);
-  const groupData = activeGroupId ? DUMMY_GROUP_DATA[activeGroupId] : null;
+  const activeGroup = organizations.find(
+    (g) => g.id === activeOrganization?.id,
+  );
+  const groupData = activeGroup ? DUMMY_GROUP_DATA[activeGroup.id] : null;
 
   return (
     <motion.div
@@ -88,8 +90,8 @@ export function DashboardHome() {
           </p>
         </div>
         <GroupSwitcher
-          groups={groups}
-          activeGroupId={activeGroupId!}
+          groups={organizations}
+          activeGroupId={activeOrganization?.id!}
           onGroupChange={handleGroupChange}
           onCreateGroup={handleCreateGroup}
           onJoinGroup={() => setJoinModalOpen(true)}
@@ -101,7 +103,7 @@ export function DashboardHome() {
           <DashboardShimmer key="shimmer" />
         ) : groupData ? (
           <motion.div
-            key={activeGroupId}
+            key={activeOrganization?.id}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
@@ -116,7 +118,7 @@ export function DashboardHome() {
               youAreOwed={groupData.balance.youAreOwed}
             />
             <QuickActions
-              activeGroupId={activeGroupId}
+              activeGroupId={activeOrganization?.id!}
               onInvite={() => setInviteModalOpen(true)}
             />
             <ActivityFeed activities={groupData.activities} />
@@ -135,7 +137,7 @@ export function DashboardHome() {
           open={inviteModalOpen}
           onClose={() => setInviteModalOpen(false)}
           groupName={activeGroup.name}
-          inviteCode={activeGroup.inviteCode}
+          inviteCode={"TODO: add invite code"}
         />
       )}
     </motion.div>

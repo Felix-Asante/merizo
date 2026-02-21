@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/ui/base/button";
-import type { CreateGroupFormValues } from "@/adapters/validation/group-validation";
+import type { CreateGroupFormValues } from "@/validation/group-validation";
 
 interface CreateGroupSubmitButtonProps {
   isLoading: boolean;

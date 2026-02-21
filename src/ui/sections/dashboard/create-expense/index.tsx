@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   expenseSchema,
   type ExpenseFormValues,
-} from "@/adapters/validation/expense-validation";
+} from "@/validation/expense-validation";
 import { ExpenseNavbar } from "./expense-navbar";
 import { ExpenseInfoSection } from "./expense-info-section";
 import { PaidBySection } from "./paid-by-section";
@@ -101,10 +101,7 @@ export function CreateExpense() {
       <ExpenseNavbar />
 
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-4"
-        >
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <ExpenseInfoSection />
           <PaidBySection members={DUMMY_EXPENSE_MEMBERS} />
           <SplitBetweenSection members={DUMMY_EXPENSE_MEMBERS} />

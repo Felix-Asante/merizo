@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/ui/base/button";
-import type { ExpenseFormValues } from "@/adapters/validation/expense-validation";
+import type { ExpenseFormValues } from "@/validation/expense-validation";
 
 interface SubmitButtonProps {
   isLoading: boolean;

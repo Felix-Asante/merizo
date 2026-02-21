@@ -1,7 +1,7 @@
 import type {
   LoginSchemaInput,
   SignupSchemaInput,
-} from "@/adapters/validation/auth-validation";
+} from "@/validation/auth-validation";
 import { authClient } from "@/lib/auth/client";
 import type { User } from "@/types/users";
 

@@ -10,7 +10,7 @@ import {
   calculateUserBalance,
   type SimplifiedDebt,
 } from "@/utils/settlement/debt-simplifier";
-import type { ManualSettlementFormValues } from "@/adapters/validation/settlement-validation";
+import type { ManualSettlementFormValues } from "@/validation/settlement-validation";
 import { SettleNavbar } from "./settle-navbar";
 import { BalanceSummaryCard } from "./balance-summary-card";
 import { SettlementSuggestions } from "./settlement-suggestions";

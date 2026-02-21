@@ -23,7 +23,7 @@ import { useMediaQuery } from "@/ui/hooks/use-media-query";
 import {
   manualSettlementSchema,
   type ManualSettlementFormValues,
-} from "@/adapters/validation/settlement-validation";
+} from "@/validation/settlement-validation";
 import type { SettleMember } from "./types";
 
 interface ManualSettlementModalProps {

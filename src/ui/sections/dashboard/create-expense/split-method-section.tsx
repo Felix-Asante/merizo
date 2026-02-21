@@ -9,7 +9,7 @@ import { Input } from "@/ui/base/input";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { Tab } from "@/ui/shared/tab";
 import { getSplitTotal } from "@/utils/expense/split-calculator";
-import type { ExpenseFormValues } from "@/adapters/validation/expense-validation";
+import type { ExpenseFormValues } from "@/validation/expense-validation";
 import type { Member, SplitMethod } from "./types";
 
 const SPLIT_METHOD_OPTIONS: { value: SplitMethod; label: string }[] = [

@@ -10,7 +10,7 @@ import { Form } from "@/ui/base/form";
 import {
   createGroupSchema,
   type CreateGroupFormValues,
-} from "@/adapters/validation/group-validation";
+} from "@/validation/group-validation";
 import { generateGroupCode } from "@/utils/group/code-generator";
 import { GroupNavbar } from "./group-navbar";
 import { GroupDetailsSection } from "./group-details-section";

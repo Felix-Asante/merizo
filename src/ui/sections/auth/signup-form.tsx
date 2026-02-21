@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import {
   signupSchema,
   type SignupSchemaInput,
-} from "@/adapters/validation/auth-validation";
+} from "@/validation/auth-validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { authService } from "@/services/auth/auth-service";

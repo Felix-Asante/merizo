@@ -8,7 +8,7 @@ import { Input } from "@/ui/base/input";
 import { Button } from "@/ui/base/button";
 import { GroupCodeDisplay } from "@/ui/shared/group-code-display";
 import { toast } from "sonner";
-import type { CreateGroupFormValues } from "@/adapters/validation/group-validation";
+import type { CreateGroupFormValues } from "@/validation/group-validation";
 
 interface InviteMembersSectionProps {
   groupCode: string;
