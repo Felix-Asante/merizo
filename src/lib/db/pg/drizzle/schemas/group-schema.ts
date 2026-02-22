@@ -4,9 +4,17 @@ import {
   timestamp,
   uniqueIndex,
   index,
+  type PgColumn,
+  type PgTableWithColumns,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { relations } from "drizzle-orm";
+import {
+  expense,
+  monthlyPeriods,
+  settlementItems,
+  settlements,
+} from "./expense-schema";
 
 export const group = pgTable(
   "organization",
@@ -68,9 +76,11 @@ export const invitation = pgTable(
 export const organizationRelations = relations(group, ({ many }) => ({
   members: many(member),
   invitations: many(invitation),
+  expenses: many(expense),
+  monthlyPeriods: many(monthlyPeriods),
 }));
 
-export const memberRelations = relations(member, ({ one }) => ({
+export const memberRelations = relations(member, ({ one, many }) => ({
   organization: one(group, {
     fields: [member.organizationId],
     references: [group.id],
@@ -79,6 +89,9 @@ export const memberRelations = relations(member, ({ one }) => ({
     fields: [member.userId],
     references: [user.id],
   }),
+  expenses: many(expense),
+  settlements: many(settlements),
+  settlementItems: many(settlementItems),
 }));
 
 export const invitationRelations = relations(invitation, ({ one }) => ({
