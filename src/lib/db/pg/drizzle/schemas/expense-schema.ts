@@ -14,6 +14,8 @@ const monthlyPeriodStatus = pgEnum("monthly_period_status", [
   "finalized",
 ]);
 
+const splitType = pgEnum("split_type", ["percentage", "equal", "custom"]);
+
 export const expense = pgTable("expense", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
@@ -25,6 +27,7 @@ export const expense = pgTable("expense", {
     .notNull()
     .references(() => member.id, { onDelete: "cascade" }),
   amount: numeric("amount").notNull(),
+  splitType: splitType("split_type").default("equal").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expenseDate: timestamp("expense_date").notNull(),
   periodId: text("period_id")
