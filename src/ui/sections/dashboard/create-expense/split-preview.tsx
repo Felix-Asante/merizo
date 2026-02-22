@@ -8,10 +8,10 @@ import { cn } from "@/ui/utils";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { calculatePreview } from "@/utils/expense/split-calculator";
 import type { ExpenseFormValues } from "@/validation/expense-validation";
-import type { Member } from "./types";
+import type { GroupMember } from "@/types/groups";
 
 interface SplitPreviewProps {
-  members: Member[];
+  members: GroupMember[];
   currentUserId: string;
 }
 

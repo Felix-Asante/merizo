@@ -1,27 +1,34 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+"use memo";
+import { useActiveGroupMembers } from "@/hooks/api/use-active-group-members";
+import { useCurrentUser } from "@/hooks/api/use-current-user";
 import { Form } from "@/ui/base/form";
-import { motion } from "framer-motion";
-import { toast } from "sonner";
 import {
   expenseSchema,
   type ExpenseFormValues,
 } from "@/validation/expense-validation";
-import { ExpenseNavbar } from "./expense-navbar";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { ExpenseInfoSection } from "./expense-info-section";
+import { ExpenseNavbar } from "./expense-navbar";
 import { PaidBySection } from "./paid-by-section";
 import { SplitBetweenSection } from "./split-between-section";
 import { SplitMethodSection } from "./split-method-section";
 import { SplitPreview } from "./split-preview";
 import { SubmitButton } from "./submit-button";
-import { CURRENT_USER_ID, DUMMY_EXPENSE_MEMBERS } from "./dummy-data";
 
 export function CreateExpense() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const { members, isLoading: isMembersLoading } = useActiveGroupMembers();
+
+  const { currentUser } = useCurrentUser();
+
+  const currentUserMember = members.find((m) => m.userId === currentUser?.id);
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
@@ -31,8 +38,8 @@ export function CreateExpense() {
       amount: 0,
       date: new Date().toISOString().split("T")[0],
       note: "",
-      paidById: CURRENT_USER_ID,
-      participantIds: DUMMY_EXPENSE_MEMBERS.map((m) => m.id),
+      paidById: currentUserMember?.id ?? "",
+      participantIds: members.map((m) => m.id),
       splitMethod: "equal",
       customSplits: {},
     },
@@ -73,6 +80,19 @@ export function CreateExpense() {
     form.setValue("customSplits", splits);
   }, [splitMethod, participantIds, amount, form]);
 
+  useEffect(() => {
+    if (currentUserMember?.id) {
+      form.setValue("paidById", currentUserMember.id);
+    }
+  }, [currentUserMember]);
+
+  useEffect(() => {
+    form.setValue(
+      "participantIds",
+      members.map((m) => m.id),
+    );
+  }, [members]);
+
   const handleSubmit = async (data: ExpenseFormValues) => {
     setIsLoading(true);
     try {
@@ -103,12 +123,18 @@ export function CreateExpense() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <ExpenseInfoSection />
-          <PaidBySection members={DUMMY_EXPENSE_MEMBERS} />
-          <SplitBetweenSection members={DUMMY_EXPENSE_MEMBERS} />
-          <SplitMethodSection members={DUMMY_EXPENSE_MEMBERS} />
+          <PaidBySection
+            members={members}
+            isMembersLoading={isMembersLoading}
+          />
+          <SplitBetweenSection
+            members={members}
+            isMembersLoading={isMembersLoading}
+          />
+          <SplitMethodSection members={members} />
           <SplitPreview
-            members={DUMMY_EXPENSE_MEMBERS}
-            currentUserId={CURRENT_USER_ID}
+            members={members}
+            currentUserId={currentUserMember?.id ?? ""}
           />
           <SubmitButton isLoading={isLoading} isSuccess={isSuccess} />
         </form>

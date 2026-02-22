@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
-import { motion, AnimatePresence } from "framer-motion";
-import { SearchIcon } from "lucide-react";
-import { cn } from "@/ui/utils";
+import type { GroupMember } from "@/types/groups";
 import { Input } from "@/ui/base/input";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { Tab } from "@/ui/shared/tab";
+import { cn } from "@/ui/utils";
 import { getSplitTotal } from "@/utils/expense/split-calculator";
 import type { ExpenseFormValues } from "@/validation/expense-validation";
-import type { Member, SplitMethod } from "./types";
+import { AnimatePresence, motion } from "framer-motion";
+import { SearchIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import type { SplitMethod } from "@/types";
+import { useCurrentUser } from "@/hooks/api/use-current-user";
 
 const SPLIT_METHOD_OPTIONS: { value: SplitMethod; label: string }[] = [
   { value: "equal", label: "Equal" },
@@ -19,7 +21,7 @@ const SPLIT_METHOD_OPTIONS: { value: SplitMethod; label: string }[] = [
 ];
 
 interface SplitMethodSectionProps {
-  members: Member[];
+  members: GroupMember[];
 }
 
 export function SplitMethodSection({ members }: SplitMethodSectionProps) {
@@ -161,17 +163,8 @@ function EqualPreview({ amount, count }: { amount: number; count: number }) {
   );
 }
 
-function CustomInputs({
-  participants,
-  customSplits,
-  onUpdate,
-  suffix,
-  total,
-  target,
-  targetLabel,
-  onDistribute,
-}: {
-  participants: Member[];
+interface CustomInputsProps {
+  participants: GroupMember[];
   customSplits: Record<string, number>;
   onUpdate: (id: string, value: number) => void;
   suffix: string;
@@ -179,7 +172,20 @@ function CustomInputs({
   target: number;
   targetLabel: string;
   onDistribute: () => void;
-}) {
+}
+function CustomInputs(props: CustomInputsProps) {
+  const {
+    participants,
+    customSplits,
+    onUpdate,
+    suffix,
+    total,
+    target,
+    targetLabel,
+    onDistribute,
+  } = props;
+  const { currentUser } = useCurrentUser();
+
   const [search, setSearch] = useState("");
   const isBalanced = Math.abs(total - target) < 0.01;
   const showSearch = participants.length > 6;
@@ -230,7 +236,7 @@ function CustomInputs({
           <div key={member.id} className="flex items-center gap-3">
             <UserAvatar name={member.name} size="sm" />
             <span className="flex-1 text-sm font-medium truncate">
-              {member.isCurrentUser ? "You" : member.name}
+              {member.userId === currentUser?.id ? "You" : member.name}
             </span>
             <div className="relative w-24">
               <Input

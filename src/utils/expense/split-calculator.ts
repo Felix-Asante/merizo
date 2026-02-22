@@ -1,9 +1,5 @@
-import type {
-  Member,
-  SplitMethod,
-  SplitResult,
-  SplitPreviewItem,
-} from "@/ui/sections/dashboard/create-expense/types";
+import type { SplitMethod, SplitResult, SplitPreviewItem } from "@/types";
+import type { GroupMember } from "@/types/groups";
 
 export function calculateSplits(
   totalAmount: number,
@@ -37,7 +33,7 @@ export function calculatePreview(
   participantIds: string[],
   splitMethod: SplitMethod,
   customSplits: Record<string, number>,
-  members: Member[],
+  members: GroupMember[],
   currentUserId: string,
 ): SplitPreviewItem[] {
   const splits = calculateSplits(
@@ -70,8 +66,5 @@ export function getSplitTotal(
   participantIds: string[],
   customSplits: Record<string, number>,
 ): number {
-  return participantIds.reduce(
-    (acc, id) => acc + (customSplits[id] ?? 0),
-    0,
-  );
+  return participantIds.reduce((acc, id) => acc + (customSplits[id] ?? 0), 0);
 }

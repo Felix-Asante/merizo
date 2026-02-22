@@ -1,3 +1,5 @@
+import type { member } from "@/lib/db/pg/drizzle/schemas";
+
 export type UserGroup = {
   id: string;
   name: string;
@@ -30,4 +32,13 @@ export type GroupTypeOption = {
   value: string;
   label: string;
   emoji: string;
+};
+
+export type GroupMember = {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: Date;
 };

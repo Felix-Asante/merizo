@@ -1,28 +1,34 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { useCurrentUser } from "@/hooks/api/use-current-user";
+import type { GroupMember } from "@/types/groups";
+import { Input } from "@/ui/base/input";
+import { useMediaQuery } from "@/ui/hooks/use-media-query";
+import { UserAvatar } from "@/ui/shared/avatar";
+import { BottomSheet } from "@/ui/shared/bottom-sheet";
+import { cn } from "@/ui/utils";
+import type { ExpenseFormValues } from "@/validation/expense-validation";
 import { motion } from "framer-motion";
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react";
 import { Popover } from "radix-ui";
-import { cn } from "@/ui/utils";
-import { Input } from "@/ui/base/input";
-import { UserAvatar } from "@/ui/shared/avatar";
-import { BottomSheet } from "@/ui/shared/bottom-sheet";
-import { useMediaQuery } from "@/ui/hooks/use-media-query";
-import type { ExpenseFormValues } from "@/validation/expense-validation";
-import type { Member } from "./types";
+import { useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { MemberSkimmer } from "./member-skimmer";
 
 interface PaidBySectionProps {
-  members: Member[];
+  members: GroupMember[];
+  isMembersLoading: boolean;
 }
 
-export function PaidBySection({ members }: PaidBySectionProps) {
+export function PaidBySection(props: PaidBySectionProps) {
+  const { members, isMembersLoading } = props;
   const { watch, setValue } = useFormContext<ExpenseFormValues>();
   const paidById = watch("paidById");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+
+  const { currentUser } = useCurrentUser();
 
   const payer = members.find((m) => m.id === paidById);
 
@@ -74,7 +80,7 @@ export function PaidBySection({ members }: PaidBySectionProps) {
               >
                 <UserAvatar name={member.name} size="sm" />
                 <span className="flex-1 text-sm font-medium truncate">
-                  {member.isCurrentUser ? "You" : member.name}
+                  {member.userId === currentUser?.id ? "You" : member.name}
                 </span>
                 {isSelected && (
                   <div className="flex items-center justify-center size-5 rounded-full bg-primary shrink-0">
@@ -89,15 +95,18 @@ export function PaidBySection({ members }: PaidBySectionProps) {
     </div>
   );
 
-  const trigger = (
+  const trigger = isMembersLoading ? (
+    <MemberSkimmer />
+  ) : (
     <motion.button
       type="button"
       whileTap={{ scale: 0.98 }}
       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/15 hover:bg-primary/10 transition-colors"
+      disabled={isMembersLoading}
     >
       <UserAvatar name={payer?.name ?? ""} size="sm" />
       <span className="flex-1 text-sm font-semibold text-left truncate">
-        {payer?.isCurrentUser ? "You" : payer?.name}
+        {payer?.userId === currentUser?.id ? "You" : payer?.name}
       </span>
       <ChevronDownIcon
         className={cn(

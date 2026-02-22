@@ -1,31 +1,37 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
-import { motion } from "framer-motion";
-import { CheckIcon, SearchIcon, UsersIcon } from "lucide-react";
-import { cn } from "@/ui/utils";
+import { useCurrentUser } from "@/hooks/api/use-current-user";
+import type { GroupMember } from "@/types/groups";
 import { Input } from "@/ui/base/input";
+import { useMediaQuery } from "@/ui/hooks/use-media-query";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
-import { useMediaQuery } from "@/ui/hooks/use-media-query";
-import { Popover } from "radix-ui";
+import { cn } from "@/ui/utils";
 import type { ExpenseFormValues } from "@/validation/expense-validation";
-import type { Member } from "./types";
+import { motion } from "framer-motion";
+import { CheckIcon, SearchIcon, UsersIcon } from "lucide-react";
+import { Popover } from "radix-ui";
+import { useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { MemberSkimmer } from "./member-skimmer";
 
 interface SplitBetweenSectionProps {
-  members: Member[];
+  members: GroupMember[];
+  isMembersLoading: boolean;
 }
 
 const MAX_VISIBLE_AVATARS = 5;
 
-export function SplitBetweenSection({ members }: SplitBetweenSectionProps) {
+export function SplitBetweenSection(props: SplitBetweenSectionProps) {
+  const { members, isMembersLoading } = props;
   const { watch, setValue, formState } = useFormContext<ExpenseFormValues>();
   const participantIds = watch("participantIds") ?? [];
   const error = formState.errors.participantIds?.message;
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+
+  const { currentUser } = useCurrentUser();
 
   const filtered = useMemo(
     () =>
@@ -113,7 +119,7 @@ export function SplitBetweenSection({ members }: SplitBetweenSectionProps) {
               >
                 <UserAvatar name={member.name} size="sm" />
                 <span className="flex-1 text-sm font-medium truncate">
-                  {member.isCurrentUser ? "You" : member.name}
+                  {member.userId === currentUser?.id ? "You" : member.name}
                 </span>
                 <div
                   className={cn(
@@ -135,7 +141,9 @@ export function SplitBetweenSection({ members }: SplitBetweenSectionProps) {
     </div>
   );
 
-  const trigger = (
+  const trigger = isMembersLoading ? (
+    <MemberSkimmer />
+  ) : (
     <motion.button
       type="button"
       whileTap={{ scale: 0.98 }}
