@@ -72,3 +72,46 @@ export async function setActiveOrganization(organizationId: string) {
     return { error: error, success: false };
   }
 }
+
+export async function joinOrganizationWithCode(inviteCode: string) {
+  try {
+    const normalizedCode = inviteCode.trim().toUpperCase();
+    const results = await withAuthenticatedUser(async (user) => {
+      const organization =
+        await organizationRepo.getOrganizationByInviteCode(normalizedCode);
+
+      if (!organization) throw new Error("Organization not found");
+
+      const activeMember = await organizationRepo.getActiveMember(
+        organization.id,
+        user.id,
+      );
+      if (activeMember)
+        throw new Error("You are already a member of this organization");
+
+      const response = await auth.api.addMember({
+        body: {
+          organizationId: organization.id,
+          userId: user.id,
+          role: "member",
+        },
+        headers: await headers(),
+      });
+
+      await setActiveOrganization(organization.id);
+
+      revalidateTag(getUserOrganizationsTag(user.id), "max");
+      revalidatePath("/");
+
+      return {
+        error: null,
+        memberId: response?.id,
+        organizationId: organization.id,
+      };
+    });
+    return { error: null, success: true, data: results };
+  } catch (error) {
+    logger.error("Failed to join organization with code", error as Error);
+    return { error: error, success: false };
+  }
+}

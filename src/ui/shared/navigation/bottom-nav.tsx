@@ -35,7 +35,7 @@ export function BottomNav() {
           />
         ))}
 
-        <Link href="/add" className="relative -mt-5">
+        <Link href="/expenses" className="relative -mt-5">
           <motion.div
             whileTap={{ scale: 0.9 }}
             className="flex items-center justify-center size-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25"

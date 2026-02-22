@@ -19,6 +19,7 @@ import {
 import type { UserOrganization } from "@/types/organization";
 import { toast } from "sonner";
 import { Logger } from "@/lib/logger";
+import { joinOrganizationWithCode } from "@/services/organizations/organization-service-server";
 
 interface DashboardHomeProps {
   organizations: UserOrganization[];
@@ -48,20 +49,29 @@ export function DashboardHome({ organizations }: DashboardHomeProps) {
     }
   }, []);
 
-  const handleJoinGroup = useCallback(async (code: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (code === "invalid") throw new Error("Invalid code");
-
-    const newGroup: Group = {
-      id: String(Date.now()),
-      name: `Joined Group (${code})`,
-      membersCount: 3,
-      balance: 0,
-      inviteCode: code.toUpperCase(),
-    };
-    // TODO: add new organization
-    // TODO: set active organization
-  }, []);
+  const handleJoinGroup = useCallback(
+    async (code: string) => {
+      const results = await joinOrganizationWithCode(code);
+      if (results.error || !results.success) {
+        toast.error("Invalid code or you're already in this group.");
+        logger.error(
+          "Failed to join group",
+          (results.error ?? new Error("Unknown")) as Error,
+          { code },
+        );
+        throw new Error(
+          results.error instanceof Error
+            ? results.error.message
+            : "Failed to join",
+        );
+      }
+      if (results.data) {
+        router.refresh();
+        await setActiveOrganizationClient(results.data.organizationId);
+      }
+    },
+    [router],
+  );
 
   const handleCreateGroup = useCallback(() => {
     router.push("/groups/create");
@@ -149,8 +159,8 @@ export function DashboardHome({ organizations }: DashboardHomeProps) {
         <InviteMembersModal
           open={inviteModalOpen}
           onClose={() => setInviteModalOpen(false)}
-          groupName={activeGroup.name}
-          inviteCode={"TODO: add invite code"}
+          groupName={activeOrganization?.name ?? ""}
+          inviteCode={activeOrganization?.inviteCode ?? ""}
         />
       )}
     </motion.div>

@@ -18,7 +18,7 @@ import { InviteMembersSection } from "./invite-members-section";
 import { CreateGroupSubmitButton } from "./submit-button";
 import { createOrganization } from "@/services/organizations/organization-service-server";
 import { useMutation } from "@tanstack/react-query";
-import { slugify } from "@/utils";
+import { generateRandomString, slugify } from "@/utils";
 import { setActiveOrganizationClient } from "@/services/organizations/organization-service-client";
 
 export function CreateGroup() {
@@ -46,7 +46,7 @@ export function CreateGroup() {
     try {
       const result = await createGroupMutation.mutateAsync({
         name: data.name,
-        slug: slugify(data.name),
+        slug: `${slugify(data.name)}-${generateRandomString(4)}`.toLowerCase(),
         inviteCode: groupCode,
         currency: data.currency,
         type: data.type,

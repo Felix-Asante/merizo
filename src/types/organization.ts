@@ -3,6 +3,7 @@ export type UserOrganization = {
   name: string;
   slug: string;
   logo: string;
+  inviteCode: string;
   memberCount: number;
 };
 
@@ -12,4 +13,15 @@ export type CreateOrganizationBody = {
   inviteCode: string;
   currency: string;
   type?: string;
+};
+
+export type Organization = {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string;
+  inviteCode: string;
+  currency: string;
+  type?: string;
+  metadata: string | null;
 };

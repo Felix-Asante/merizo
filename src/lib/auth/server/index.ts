@@ -1,9 +1,9 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "../index";
-import { redirect } from "next/navigation";
 import type { User } from "@/types/users";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "../index";
 
 export async function isAuthenticated() {
   const session = await auth.api.getSession({

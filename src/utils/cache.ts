@@ -1,4 +1,4 @@
-type cacheTags = "users" | "organizations" | "activities";
+type cacheTags = "users" | "organizations" | "activities" | "session";
 
 export function getGlobalTag(tag: cacheTags) {
   return `global:${tag}`;
@@ -14,4 +14,8 @@ export function getUserOrganizationsTag(userId: string) {
 
 export function getOrganizationActivitiesTag(organizationId: string) {
   return `organizations:${organizationId}:activities`;
+}
+
+export function getSessionTag() {
+  return `session`;
 }
