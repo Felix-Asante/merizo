@@ -12,12 +12,20 @@ import { JoinGroupModal } from "./join-group-modal";
 import { InviteMembersModal } from "@/ui/shared/invite-members-modal";
 import { DashboardShimmer } from "./dashboard-shimmer";
 import { DUMMY_GROUP_DATA, type Group } from "./dummy-data";
-import { getActiveOrganization } from "@/services/organizations/organization-service-client";
+import {
+  getActiveOrganization,
+  setActiveOrganizationClient,
+} from "@/services/organizations/organization-service-client";
 import type { UserOrganization } from "@/types/organization";
+import { toast } from "sonner";
+import { Logger } from "@/lib/logger";
 
 interface DashboardHomeProps {
   organizations: UserOrganization[];
 }
+
+const logger = new Logger("DashboardHome");
+
 export function DashboardHome({ organizations }: DashboardHomeProps) {
   const router = useRouter();
 
@@ -27,12 +35,17 @@ export function DashboardHome({ organizations }: DashboardHomeProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleGroupChange = useCallback((groupId: string) => {
-    if (groupId === activeOrganization?.id) return;
-    setIsTransitioning(true);
-    setTimeout(() => {
-      // TODO: set active organization
-      setIsTransitioning(false);
-    }, 250);
+    try {
+      if (groupId === activeOrganization?.id) return;
+      setIsTransitioning(true);
+      setTimeout(async () => {
+        await setActiveOrganizationClient(groupId);
+        setIsTransitioning(false);
+      }, 250);
+    } catch (error) {
+      toast.error("Failed to set active group. Please try again.");
+      logger.error("Failed to set active group", error as Error, { groupId });
+    }
   }, []);
 
   const handleJoinGroup = useCallback(async (code: string) => {

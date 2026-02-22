@@ -12,7 +12,7 @@ import FormInput from "@/ui/shared/inputs/form-input";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
 import type { CreateGroupFormValues } from "@/validation/group-validation";
-import { GROUP_TYPES, CURRENCIES } from "./dummy-data";
+import { GROUP_TYPES, CURRENCIES } from "@/config/constants";
 
 export function GroupDetailsSection() {
   return (

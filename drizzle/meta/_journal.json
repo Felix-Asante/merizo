@@ -15,6 +15,13 @@
       "when": 1771494490927,
       "tag": "0001_condemned_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771636119828,
+      "tag": "0002_greedy_human_fly",
+      "breakpoints": true
     }
   ]
 }

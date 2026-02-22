@@ -1,12 +1,5 @@
-import type { GroupTypeOption, CurrencyOption } from "./types";
-
-export const GROUP_TYPES: GroupTypeOption[] = [
-  { value: "home", label: "Home", emoji: "🏠" },
-  { value: "trip", label: "Trip", emoji: "✈️" },
-  { value: "couple", label: "Couple", emoji: "💑" },
-  { value: "friends", label: "Friends", emoji: "👥" },
-  { value: "other", label: "Other", emoji: "📦" },
-];
+import type { CurrencyOption } from "@/types";
+import type { GroupTypeOption } from "@/types/group";
 
 export const CURRENCIES: CurrencyOption[] = [
   { code: "MAD", symbol: "MAD", name: "Moroccan Dirham" },
@@ -20,4 +13,12 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "INR", symbol: "₹", name: "Indian Rupee" },
   { code: "MXN", symbol: "MX$", name: "Mexican Peso" },
   { code: "BRL", symbol: "R$", name: "Brazilian Real" },
+];
+
+export const GROUP_TYPES: GroupTypeOption[] = [
+  { value: "home", label: "Home", emoji: "🏠" },
+  { value: "trip", label: "Trip", emoji: "✈️" },
+  { value: "couple", label: "Couple", emoji: "💑" },
+  { value: "friends", label: "Friends", emoji: "👥" },
+  { value: "other", label: "Other", emoji: "📦" },
 ];

@@ -16,11 +16,15 @@ import { GroupNavbar } from "./group-navbar";
 import { GroupDetailsSection } from "./group-details-section";
 import { InviteMembersSection } from "./invite-members-section";
 import { CreateGroupSubmitButton } from "./submit-button";
+import { createOrganization } from "@/services/organizations/organization-service-server";
+import { useMutation } from "@tanstack/react-query";
+import { slugify } from "@/utils";
+import { setActiveOrganizationClient } from "@/services/organizations/organization-service-client";
 
 export function CreateGroup() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
   const groupCode = useMemo(() => generateGroupCode(), []);
 
   const form = useForm<CreateGroupFormValues>({
@@ -29,25 +33,39 @@ export function CreateGroup() {
     defaultValues: {
       name: "",
       type: undefined,
-      currency: "USD",
+      currency: "MAD",
       memberEmails: [],
     },
   });
 
+  const createGroupMutation = useMutation({
+    mutationFn: createOrganization,
+  });
+
   const handleSubmit = async (data: CreateGroupFormValues) => {
-    setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      console.log("Group created:", { ...data, inviteCode: groupCode });
+      const result = await createGroupMutation.mutateAsync({
+        name: data.name,
+        slug: slugify(data.name),
+        inviteCode: groupCode,
+        currency: data.currency,
+        type: data.type,
+      });
+      if (result.error || !result.success) {
+        toast.error("Failed to create group. Please try again.");
+        return;
+      }
       setIsSuccess(true);
       toast.success("Group created successfully!");
+      if (result.data) {
+        await setActiveOrganizationClient(result.data.id);
+      }
+      form.reset();
       setTimeout(() => {
         router.push("/");
       }, 1200);
     } catch {
       toast.error("Failed to create group. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -65,7 +83,7 @@ export function CreateGroup() {
           <GroupDetailsSection />
           <InviteMembersSection groupCode={groupCode} />
           <CreateGroupSubmitButton
-            isLoading={isLoading}
+            isLoading={createGroupMutation.isPending}
             isSuccess={isSuccess}
           />
         </form>

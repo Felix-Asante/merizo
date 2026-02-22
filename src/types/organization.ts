@@ -5,3 +5,11 @@ export type UserOrganization = {
   logo: string;
   memberCount: number;
 };
+
+export type CreateOrganizationBody = {
+  name: string;
+  slug: string;
+  inviteCode: string;
+  currency: string;
+  type?: string;
+};
