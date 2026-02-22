@@ -16,10 +16,10 @@ import { GroupNavbar } from "./group-navbar";
 import { GroupDetailsSection } from "./group-details-section";
 import { InviteMembersSection } from "./invite-members-section";
 import { CreateGroupSubmitButton } from "./submit-button";
-import { createOrganization } from "@/services/organizations/organization-service-server";
+import { createGroup } from "@/services/groups/groups-service-server";
 import { useMutation } from "@tanstack/react-query";
 import { generateRandomString, slugify } from "@/utils";
-import { setActiveOrganizationClient } from "@/services/organizations/organization-service-client";
+import { setActiveGroupClient } from "@/services/groups/groups-service-client";
 
 export function CreateGroup() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export function CreateGroup() {
   });
 
   const createGroupMutation = useMutation({
-    mutationFn: createOrganization,
+    mutationFn: createGroup,
   });
 
   const handleSubmit = async (data: CreateGroupFormValues) => {
@@ -58,7 +58,7 @@ export function CreateGroup() {
       setIsSuccess(true);
       toast.success("Group created successfully!");
       if (result.data) {
-        await setActiveOrganizationClient(result.data.id);
+        await setActiveGroupClient(result.data.id);
       }
       form.reset();
       setTimeout(() => {

@@ -8,7 +8,7 @@ import {
 import { user } from "./auth-schema";
 import { relations } from "drizzle-orm";
 
-export const organization = pgTable(
+export const group = pgTable(
   "organization",
   {
     id: text("id").primaryKey(),
@@ -30,7 +30,7 @@ export const member = pgTable(
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => group.id, { onDelete: "cascade" }),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -49,7 +49,7 @@ export const invitation = pgTable(
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: "cascade" }),
+      .references(() => group.id, { onDelete: "cascade" }),
     email: text("email").notNull(),
     role: text("role"),
     status: text("status").default("pending").notNull(),
@@ -65,15 +65,15 @@ export const invitation = pgTable(
   ],
 );
 
-export const organizationRelations = relations(organization, ({ many }) => ({
+export const organizationRelations = relations(group, ({ many }) => ({
   members: many(member),
   invitations: many(invitation),
 }));
 
 export const memberRelations = relations(member, ({ one }) => ({
-  organization: one(organization, {
+  organization: one(group, {
     fields: [member.organizationId],
-    references: [organization.id],
+    references: [group.id],
   }),
   user: one(user, {
     fields: [member.userId],
@@ -82,9 +82,9 @@ export const memberRelations = relations(member, ({ one }) => ({
 }));
 
 export const invitationRelations = relations(invitation, ({ one }) => ({
-  organization: one(organization, {
+  organization: one(group, {
     fields: [invitation.organizationId],
-    references: [organization.id],
+    references: [group.id],
   }),
   user: one(user, {
     fields: [invitation.inviterId],

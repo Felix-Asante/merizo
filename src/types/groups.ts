@@ -1,13 +1,13 @@
-export type UserOrganization = {
+export type UserGroup = {
   id: string;
   name: string;
   slug: string;
-  logo: string;
+  logo: string | null;
   inviteCode: string;
   memberCount: number;
 };
 
-export type CreateOrganizationBody = {
+export type CreateGroupBody = {
   name: string;
   slug: string;
   inviteCode: string;
@@ -15,7 +15,7 @@ export type CreateOrganizationBody = {
   type?: string;
 };
 
-export type Organization = {
+export type Group = {
   id: string;
   name: string;
   slug: string;
@@ -24,4 +24,10 @@ export type Organization = {
   currency: string;
   type?: string;
   metadata: string | null;
+};
+
+export type GroupTypeOption = {
+  value: string;
+  label: string;
+  emoji: string;
 };

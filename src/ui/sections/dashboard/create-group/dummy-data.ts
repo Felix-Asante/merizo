@@ -1,4 +1,4 @@
-import type { GroupTypeOption } from "./types";
+import type { GroupTypeOption } from "@/types/groups";
 
 export const GROUP_TYPES: GroupTypeOption[] = [
   { value: "home", label: "Home", emoji: "🏠" },

@@ -1,5 +1,5 @@
 import type { CurrencyOption } from "@/types";
-import type { GroupTypeOption } from "@/types/group";
+import type { GroupTypeOption } from "@/types/groups";
 
 export const CURRENCIES: CurrencyOption[] = [
   { code: "MAD", symbol: "MAD", name: "Moroccan Dirham" },

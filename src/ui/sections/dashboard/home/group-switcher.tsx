@@ -13,7 +13,7 @@ import { Popover } from "radix-ui";
 import { cn } from "@/ui/utils";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
-import type { UserOrganization } from "@/types/organization";
+import type { UserGroup } from "@/types/groups";
 
 export interface GroupSwitcherGroup {
   id: string;
@@ -22,7 +22,7 @@ export interface GroupSwitcherGroup {
 }
 
 interface GroupSwitcherProps {
-  groups: UserOrganization[];
+  groups: UserGroup[];
   activeGroupId: string;
   onGroupChange: (groupId: string) => void;
   onCreateGroup: () => void;
@@ -140,7 +140,7 @@ function Trigger(props: TriggerProps) {
 }
 
 interface GroupListProps {
-  groups: UserOrganization[];
+  groups: UserGroup[];
   activeGroupId: string;
   onGroupChange: (groupId: string) => void;
   onCreateGroup: () => void;
