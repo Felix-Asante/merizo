@@ -1,0 +1,1 @@
+ALTER TABLE "expense" ADD COLUMN "split_type" "split_type" DEFAULT 'equal' NOT NULL;

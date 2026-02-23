@@ -72,6 +72,9 @@ export function SplitPreview({ members, currentUserId }: SplitPreviewProps) {
             <UserAvatar name={item.name} size="sm" />
             <span className="text-sm truncate">{item.name}</span>
             <ArrowRightIcon className="size-3 text-muted-foreground shrink-0" />
+            <span className="text-sm truncate">
+              {payerIsCurrentUser ? "You" : (payer?.name ?? "Unknown")}
+            </span>
             <span
               className={cn(
                 "ml-auto text-sm font-semibold shrink-0",

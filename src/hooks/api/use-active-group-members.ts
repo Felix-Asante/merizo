@@ -14,5 +14,5 @@ export function useActiveGroupMembers() {
   const error = responseError ?? data?.error;
   const members = data?.data ?? [];
 
-  return { members, error, isLoading };
+  return { members, error, isLoading, activeGroup };
 }

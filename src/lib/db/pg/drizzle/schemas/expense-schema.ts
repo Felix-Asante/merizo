@@ -7,14 +7,19 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { group, member } from "./group-schema";
-import { relations, Relations } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 
 const monthlyPeriodStatus = pgEnum("monthly_period_status", [
   "open",
   "finalized",
 ]);
 
-const splitType = pgEnum("split_type", ["percentage", "equal", "custom"]);
+const splitType = pgEnum("split_type", [
+  "percentage",
+  "equal",
+  "exact",
+  "custom",
+]);
 
 export const expense = pgTable("expense", {
   id: text("id").primaryKey(),

@@ -19,12 +19,23 @@ import { SplitBetweenSection } from "./split-between-section";
 import { SplitMethodSection } from "./split-method-section";
 import { SplitPreview } from "./split-preview";
 import { SubmitButton } from "./submit-button";
+import { useMutation } from "@tanstack/react-query";
+import { createExpense } from "@/services/expenses/expense-actions";
+import { Logger } from "@/lib/logger";
+import { getErrorMessage } from "@/utils/errors";
+import { useRouter } from "next/navigation";
+
+const logger = new Logger("CreateExpensePage");
 
 export function CreateExpense() {
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const router = useRouter();
 
-  const { members, isLoading: isMembersLoading } = useActiveGroupMembers();
+  const {
+    members,
+    isLoading: isMembersLoading,
+    activeGroup,
+  } = useActiveGroupMembers();
 
   const { currentUser } = useCurrentUser();
 
@@ -43,6 +54,10 @@ export function CreateExpense() {
       splitMethod: "equal",
       customSplits: {},
     },
+  });
+
+  const createExpenseMutation = useMutation({
+    mutationFn: createExpense,
   });
 
   const splitMethod = form.watch("splitMethod");
@@ -94,20 +109,51 @@ export function CreateExpense() {
   }, [members]);
 
   const handleSubmit = async (data: ExpenseFormValues) => {
-    setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      console.log("Expense submitted:", data);
+      if (!activeGroup) {
+        toast.error("No active group found. Please select a group.");
+        return;
+      }
+
+      const result = await createExpenseMutation.mutateAsync({
+        amount: data.amount,
+        title: data.title,
+        date: data.date,
+        note: data.note ?? null,
+        splitMethod: data.splitMethod,
+        paidById: data.paidById,
+        participantIds: data.participantIds,
+        customSplits: data.customSplits,
+        groupId: activeGroup.id,
+      });
+
+      if (result.error) {
+        const errorMessage = getErrorMessage(result.error);
+        logger.error("Failed to add expense", result.error as Error, { data });
+        toast.error(errorMessage ?? "Failed to add expense. Please try again.");
+        return;
+      }
       setIsSuccess(true);
       toast.success("Expense added successfully!");
       setTimeout(() => {
         setIsSuccess(false);
-        form.reset();
+        form.reset({
+          participantIds: members.map((m) => m.id),
+          paidById: currentUserMember?.id,
+          splitMethod: "equal",
+          customSplits: {},
+          amount: 0,
+          note: "",
+        });
+        router.push("/activity");
       }, 1500);
-    } catch {
-      toast.error("Failed to add expense. Please try again.");
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      logger.error("Failed to add expense", error as Error, {
+        data,
+        errorMessage,
+      });
+      toast.error(errorMessage ?? "Failed to add expense. Please try again.");
     }
   };
 
@@ -136,7 +182,10 @@ export function CreateExpense() {
             members={members}
             currentUserId={currentUserMember?.id ?? ""}
           />
-          <SubmitButton isLoading={isLoading} isSuccess={isSuccess} />
+          <SubmitButton
+            isLoading={createExpenseMutation.isPending}
+            isSuccess={isSuccess}
+          />
         </form>
       </Form>
     </motion.div>

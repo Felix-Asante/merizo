@@ -36,6 +36,20 @@
       "when": 1771794410097,
       "tag": "0004_heavy_martin_li",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771843512917,
+      "tag": "0005_dusty_brother_voodoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771844731394,
+      "tag": "0006_lean_makkari",
+      "breakpoints": true
     }
   ]
 }

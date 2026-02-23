@@ -2,8 +2,8 @@
 
 import { auth } from "@/lib/auth";
 import { withAuthenticatedUser } from "@/lib/auth/server";
-import { groupRepo } from "@/lib/db/pg/drizzle/group-repo";
 import { Logger } from "@/lib/logger";
+import { groupRepo } from "@/lib/db/pg/drizzle/group-repo";
 import type { CreateGroupBody } from "@/types/groups";
 import { getGroupMembersTag, getUserGroupsTag } from "@/utils/cache";
 import { cacheTag, revalidatePath, revalidateTag } from "next/cache";
