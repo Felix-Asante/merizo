@@ -1,11 +1,17 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server";
-import { ExpenseRepo } from "@/lib/db/pg/drizzle/expense-repo";
-import { GroupRepo } from "@/lib/db/pg/drizzle/group-repo";
+import { expenseRepo, ExpenseRepo } from "@/lib/db/pg/drizzle/expense-repo";
+import { groupRepo, GroupRepo } from "@/lib/db/pg/drizzle/group-repo";
 import { withTransaction } from "@/lib/db/pg/drizzle/transaction";
-import { UsersRepo } from "@/lib/db/pg/drizzle/users-repo";
+import { usersRepo, UsersRepo } from "@/lib/db/pg/drizzle/users-repo";
 import type { CreateExpenseBody } from "@/types/expenses";
+import type { GroupMember } from "@/types/groups";
+import {
+  calculateNetBalancePerMember,
+  calculateSettlementSuggestions,
+} from "@/utils/expense/calculate-settlement-suggestion";
+
 import { calculateSplits } from "@/utils/expense/split-calculator";
 
 export async function createExpense(createExpenseBody: CreateExpenseBody) {
@@ -92,6 +98,63 @@ export async function createExpense(createExpenseBody: CreateExpenseBody) {
     return { error: null, data: results };
   } catch (error) {
     console.log(error);
+    return {
+      error: new Error("something went wrong. Please try again."),
+      data: null,
+    };
+  }
+}
+
+export async function getSettlementSuggestions(groupId: string) {
+  try {
+    const data = await withAuthenticatedUser(async (user) => {
+      const currentMember = await usersRepo.getMemberByUserId(user.id);
+      if (!currentMember) {
+        throw new Error("You are not a member of any group");
+      }
+
+      const groupMembers = await groupRepo.getGroupMembers(groupId);
+
+      const unsettledPeriods = await expenseRepo.getUnsettledPeriods(groupId);
+
+      const netBalancePerMember = [];
+      for (const period of unsettledPeriods) {
+        const [totalPaidPerMember, totalOwedPerMember] = await Promise.all([
+          expenseRepo.getTotalPaidPerMember(period.id),
+          expenseRepo.getTotalOwedPerMember(period.id),
+        ]);
+
+        const netBalancePerMemberForPeriod = calculateNetBalancePerMember(
+          totalPaidPerMember,
+          totalOwedPerMember,
+          period,
+          groupMembers,
+        );
+
+        console.log(
+          `totalPaidPerMember: ${JSON.stringify(totalPaidPerMember, null, 2)}, totalOwedPerMember: ${JSON.stringify(totalOwedPerMember, null, 2)}`,
+        );
+        netBalancePerMember.push(...netBalancePerMemberForPeriod);
+      }
+      const creditors = netBalancePerMember
+        .filter((member) => member.netBalance > 0)
+        .sort((a, b) => b.netBalance - a.netBalance);
+      const debtors = netBalancePerMember
+        .filter((member) => member.netBalance < 0)
+        .sort((a, b) => a.netBalance - b.netBalance);
+
+      console.log(
+        ` netBalance: ${JSON.stringify(netBalancePerMember, null, 2)}, creditors: ${JSON.stringify(creditors, null, 2)}, debtors: ${JSON.stringify(debtors, null, 2)}`,
+      );
+
+      const suggestions = calculateSettlementSuggestions(debtors, creditors);
+      console.log({ suggestions });
+      return [];
+    });
+
+    return { error: null, data };
+  } catch (error) {
+    console.error("[getSettlementSuggestions]", error);
     return {
       error: new Error("something went wrong. Please try again."),
       data: null,

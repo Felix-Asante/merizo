@@ -34,3 +34,14 @@ export async function withAuthenticatedUser<T>(
 
   return callback(session.user);
 }
+
+export async function getActiveOrganizationId(): Promise<string | null> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  return (
+    (session?.session as { activeOrganizationId?: string })
+      ?.activeOrganizationId ?? null
+  );
+}
