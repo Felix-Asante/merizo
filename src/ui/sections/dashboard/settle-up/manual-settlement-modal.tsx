@@ -5,7 +5,12 @@ import { useForm, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Dialog } from "radix-ui";
-import { XIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
+import {
+  XIcon,
+  CheckCircle2Icon,
+  Loader2Icon,
+  CalendarIcon,
+} from "lucide-react";
 import { cn } from "@/ui/utils";
 import { Button } from "@/ui/base/button";
 import { Input } from "@/ui/base/input";
@@ -20,16 +25,18 @@ import FormInput from "@/ui/shared/inputs/form-input";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
+import { formatPeriodLabel } from "@/lib/settlement-engine";
 import {
   manualSettlementSchema,
   type ManualSettlementFormValues,
 } from "@/validation/settlement-validation";
-import type { SettleMember } from "./types";
+import type { SettleMember, SettlementPeriod } from "@/types/settlement";
 
 interface ManualSettlementModalProps {
   open: boolean;
   onClose: () => void;
   members: SettleMember[];
+  periods: SettlementPeriod[];
   onSubmit: (data: ManualSettlementFormValues) => Promise<void>;
 }
 
@@ -37,6 +44,7 @@ export function ManualSettlementModal({
   open,
   onClose,
   members,
+  periods,
   onSubmit,
 }: ManualSettlementModalProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -46,6 +54,7 @@ export function ManualSettlementModal({
     resolver: zodResolver(manualSettlementSchema),
     mode: "onChange",
     defaultValues: {
+      periodId: periods[0]?.id ?? "",
       fromId: "",
       toId: "",
       amount: 0,
@@ -87,6 +96,7 @@ export function ManualSettlementModal({
     <div className="px-4 pb-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <PeriodField periods={periods} />
           <MemberSelector
             name="fromId"
             label="From (payer)"
@@ -151,6 +161,42 @@ export function ManualSettlementModal({
     <BottomSheet open={open} onClose={handleClose} title="Record Settlement">
       {content}
     </BottomSheet>
+  );
+}
+
+function PeriodField({ periods }: { periods: SettlementPeriod[] }) {
+  const { control } = useFormContext<ManualSettlementFormValues>();
+
+  return (
+    <FormField
+      control={control}
+      name="periodId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Period</FormLabel>
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {periods.map((period) => (
+              <motion.button
+                key={period.id}
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={() => field.onChange(period.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs whitespace-nowrap border transition-colors",
+                  field.value === period.id
+                    ? "bg-primary/10 border-primary/30 text-primary font-medium"
+                    : "bg-card border-border/50 text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <CalendarIcon className="size-3" />
+                <span>{formatPeriodLabel(period.year, period.month)}</span>
+              </motion.button>
+            ))}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
 }
 

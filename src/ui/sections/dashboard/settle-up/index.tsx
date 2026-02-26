@@ -6,70 +6,102 @@ import { PlusIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/ui/base/button";
 import {
-  simplifyDebts,
-  calculateUserBalance,
-  type SimplifiedDebt,
-} from "@/utils/settlement/debt-simplifier";
+  getContextDebts,
+  computeUserBalance,
+  generateSuggestions,
+  type SettlementSuggestion,
+} from "@/lib/settlement-engine";
+import { recordSettlement } from "@/services/expenses/expense-actions";
 import type { ManualSettlementFormValues } from "@/validation/settlement-validation";
+import type { SettlementPageData, SettlementContext } from "@/types/settlement";
 import { SettleNavbar } from "./settle-navbar";
-import { BalanceSummaryCard } from "./balance-summary-card";
-import { SettlementSuggestions } from "./settlement-suggestions";
-import { OutstandingDebts } from "./outstanding-debts";
-import { ConfirmSettleModal } from "./confirm-settle-modal";
+import { PeriodSelector } from "./period-selector";
+import { SettlementOverviewCard } from "./settlement-overview-card";
+import { SettlementOptions } from "./settlement-options";
+import { SettleModal } from "./settle-modal";
 import { ManualSettlementModal } from "./manual-settlement-modal";
-import { CURRENT_USER_ID, SETTLE_MEMBERS, DUMMY_DEBTS } from "./dummy-data";
-import type { Debt } from "./types";
+import { SettlementHistory } from "./settlement-history";
 
-export function SettleUp() {
-  const [debts, setDebts] = useState<Debt[]>(DUMMY_DEBTS);
-  const [confirmTarget, setConfirmTarget] = useState<SimplifiedDebt | null>(
-    null,
-  );
+interface SettleUpProps {
+  settlementData: SettlementPageData;
+  groupId: string;
+}
+
+export function SettleUp({ settlementData, groupId }: SettleUpProps) {
+  const { currentUserMemberId, members, periods, debts, settlements } =
+    settlementData;
+
+  const [context, setContext] = useState<SettlementContext>("open");
+  const [confirmTarget, setConfirmTarget] =
+    useState<SettlementSuggestion | null>(null);
   const [manualModalOpen, setManualModalOpen] = useState(false);
 
-  const balance = useMemo(
-    () => calculateUserBalance(debts, CURRENT_USER_ID),
-    [debts],
+  const contextDebts = useMemo(
+    () => getContextDebts(debts, context),
+    [debts, context],
   );
 
-  const suggestions = useMemo(() => simplifyDebts(debts), [debts]);
+  const balance = useMemo(
+    () => computeUserBalance(contextDebts, currentUserMemberId),
+    [contextDebts, currentUserMemberId],
+  );
 
-  const handleOpenConfirm = useCallback((suggestion: SimplifiedDebt) => {
+  const suggestions = useMemo(
+    () => generateSuggestions(contextDebts),
+    [contextDebts],
+  );
+
+  const handleOpenConfirm = useCallback((suggestion: SettlementSuggestion) => {
     setConfirmTarget(suggestion);
   }, []);
 
   const handleSettleSuggestion = useCallback(
-    async (suggestion: SimplifiedDebt) => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setDebts((prev) =>
-        prev.map((d) => {
-          if (d.settled) return d;
-          const isBetween =
-            (d.from === suggestion.from && d.to === suggestion.to) ||
-            (d.from === suggestion.to && d.to === suggestion.from);
-          return isBetween ? { ...d, settled: true } : d;
-        }),
-      );
+    async (
+      suggestion: SettlementSuggestion,
+      amount: number,
+      note: string,
+    ) => {
+      const periodId = context === "open" ? "open" : context;
+      if (!periodId) return;
+
+      const result = await recordSettlement({
+        groupId,
+        periodId,
+        fromMemberId: suggestion.from,
+        toMemberId: suggestion.to,
+        amount,
+        note: note || undefined,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message);
+        throw result.error;
+      }
+
       toast.success("Settlement recorded!");
     },
-    [],
+    [groupId, context],
   );
 
   const handleManualSettle = useCallback(
     async (data: ManualSettlementFormValues) => {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setDebts((prev) =>
-        prev.map((d) => {
-          if (d.settled) return d;
-          const isBetween =
-            (d.from === data.fromId && d.to === data.toId) ||
-            (d.from === data.toId && d.to === data.fromId);
-          return isBetween ? { ...d, settled: true } : d;
-        }),
-      );
+      const result = await recordSettlement({
+        groupId,
+        periodId: data.periodId,
+        fromMemberId: data.fromId,
+        toMemberId: data.toId,
+        amount: data.amount,
+        note: data.note || undefined,
+      });
+
+      if (result.error) {
+        toast.error(result.error.message);
+        throw result.error;
+      }
+
       toast.success("Settlement recorded!");
     },
-    [],
+    [groupId],
   );
 
   return (
@@ -82,21 +114,33 @@ export function SettleUp() {
       <SettleNavbar />
 
       <div className="space-y-4">
-        <BalanceSummaryCard balance={balance} />
-
-        <SettlementSuggestions
-          suggestions={suggestions}
-          members={SETTLE_MEMBERS}
-          currentUserId={CURRENT_USER_ID}
-          onSettle={handleOpenConfirm}
+        <PeriodSelector
+          periods={periods}
+          debts={debts}
+          selected={context}
+          onSelect={setContext}
         />
 
-        <OutstandingDebts debts={debts} members={SETTLE_MEMBERS} />
+        <SettlementOverviewCard
+          balance={balance}
+          context={context}
+          periods={periods}
+          debts={debts}
+        />
+
+        <SettlementOptions
+          suggestions={suggestions}
+          members={members}
+          currentUserMemberId={currentUserMemberId}
+          context={context}
+          periods={periods}
+          onSettle={handleOpenConfirm}
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.2 }}
+          transition={{ duration: 0.25, delay: 0.15 }}
         >
           <Button
             variant="outline"
@@ -104,23 +148,26 @@ export function SettleUp() {
             className="w-full h-11 rounded-xl"
           >
             <PlusIcon className="size-4" />
-            Record Manual Settlement
+            Record Custom Settlement
           </Button>
         </motion.div>
+
+        <SettlementHistory settlements={settlements} members={members} />
       </div>
 
-      <ConfirmSettleModal
+      <SettleModal
         open={confirmTarget !== null}
         onClose={() => setConfirmTarget(null)}
         suggestion={confirmTarget}
-        members={SETTLE_MEMBERS}
+        members={members}
         onConfirm={handleSettleSuggestion}
       />
 
       <ManualSettlementModal
         open={manualModalOpen}
         onClose={() => setManualModalOpen(false)}
-        members={SETTLE_MEMBERS}
+        members={members}
+        periods={periods}
         onSubmit={handleManualSettle}
       />
     </motion.div>

@@ -10,30 +10,39 @@ import {
   XIcon,
 } from "lucide-react";
 import { Button } from "@/ui/base/button";
+import { Input } from "@/ui/base/input";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
-import type { SimplifiedDebt } from "@/utils/settlement/debt-simplifier";
-import type { SettleMember } from "./types";
+import { cn } from "@/ui/utils";
+import type { SettlementSuggestion } from "@/lib/settlement-engine";
+import type { SettleMember } from "@/types/settlement";
 
-interface ConfirmSettleModalProps {
+interface SettleModalProps {
   open: boolean;
   onClose: () => void;
-  suggestion: SimplifiedDebt | null;
+  suggestion: SettlementSuggestion | null;
   members: SettleMember[];
-  onConfirm: (suggestion: SimplifiedDebt) => Promise<void>;
+  onConfirm: (
+    suggestion: SettlementSuggestion,
+    amount: number,
+    note: string,
+  ) => Promise<void>;
 }
 
-export function ConfirmSettleModal({
+export function SettleModal({
   open,
   onClose,
   suggestion,
   members,
   onConfirm,
-}: ConfirmSettleModalProps) {
+}: SettleModalProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isPartial, setIsPartial] = useState(false);
+  const [customAmount, setCustomAmount] = useState("");
+  const [note, setNote] = useState("");
 
   const getMember = (id: string) => members.find((m) => m.id === id);
   const getName = (id: string) => {
@@ -44,14 +53,22 @@ export function ConfirmSettleModal({
   const handleClose = () => {
     if (isLoading) return;
     setIsSuccess(false);
+    setIsPartial(false);
+    setCustomAmount("");
+    setNote("");
     onClose();
   };
 
   const handleConfirm = async () => {
     if (!suggestion) return;
+    const amount = isPartial
+      ? parseFloat(customAmount) || 0
+      : suggestion.amount;
+    if (amount <= 0 || amount > suggestion.amount) return;
+
     setIsLoading(true);
     try {
-      await onConfirm(suggestion);
+      await onConfirm(suggestion, amount, note);
       setIsSuccess(true);
       setTimeout(handleClose, 1200);
     } catch {
@@ -62,6 +79,12 @@ export function ConfirmSettleModal({
   };
 
   if (!suggestion) return null;
+
+  const settlementAmount = isPartial
+    ? parseFloat(customAmount) || 0
+    : suggestion.amount;
+  const isValidAmount =
+    settlementAmount > 0 && settlementAmount <= suggestion.amount;
 
   const content = (
     <div className="px-4 pb-6">
@@ -112,24 +135,82 @@ export function ConfirmSettleModal({
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground text-center">
-              Confirm that{" "}
-              <span className="font-medium text-foreground">
-                {getName(suggestion.from)}
-              </span>{" "}
-              paid{" "}
-              <span className="font-medium text-foreground">
-                ${suggestion.amount.toFixed(2)}
-              </span>{" "}
-              to{" "}
-              <span className="font-medium text-foreground">
-                {getName(suggestion.to)}
-              </span>
-            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPartial(false);
+                  setCustomAmount("");
+                }}
+                className={cn(
+                  "flex-1 py-2 text-xs font-medium rounded-xl border transition-colors",
+                  !isPartial
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-card border-border/50 text-muted-foreground hover:bg-accent",
+                )}
+              >
+                Full (${suggestion.amount.toFixed(2)})
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPartial(true)}
+                className={cn(
+                  "flex-1 py-2 text-xs font-medium rounded-xl border transition-colors",
+                  isPartial
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-card border-border/50 text-muted-foreground hover:bg-accent",
+                )}
+              >
+                Custom Amount
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {isPartial && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                        $
+                      </span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        value={customAmount}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                            setCustomAmount(raw);
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="h-11 rounded-xl pl-7"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Max: ${suggestion.amount.toFixed(2)}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Add a note (optional)"
+              className="h-10 rounded-xl text-sm"
+            />
 
             <Button
               onClick={handleConfirm}
-              disabled={isLoading}
+              disabled={isLoading || !isValidAmount}
               className="w-full h-11 rounded-xl"
             >
               {isLoading ? (
@@ -138,7 +219,7 @@ export function ConfirmSettleModal({
                   Settling...
                 </>
               ) : (
-                "Confirm Settlement"
+                `Settle $${settlementAmount.toFixed(2)}`
               )}
             </Button>
           </motion.div>

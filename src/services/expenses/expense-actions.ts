@@ -1,18 +1,15 @@
 "use server";
 
 import { withAuthenticatedUser } from "@/lib/auth/server";
-import { expenseRepo, ExpenseRepo } from "@/lib/db/pg/drizzle/expense-repo";
-import { groupRepo, GroupRepo } from "@/lib/db/pg/drizzle/group-repo";
+import { ExpenseRepo } from "@/lib/db/pg/drizzle/expense-repo";
+import { GroupRepo } from "@/lib/db/pg/drizzle/group-repo";
 import { withTransaction } from "@/lib/db/pg/drizzle/transaction";
-import { usersRepo, UsersRepo } from "@/lib/db/pg/drizzle/users-repo";
+import { UsersRepo } from "@/lib/db/pg/drizzle/users-repo";
 import type { CreateExpenseBody } from "@/types/expenses";
-import type { GroupMember } from "@/types/groups";
-import {
-  calculateNetBalancePerMember,
-  calculateSettlementSuggestions,
-} from "@/utils/expense/calculate-settlement-suggestion";
-
+import type { SettlementPageData } from "@/types/settlement";
+import { buildSettlementPageData } from "@/utils/expense/calculate-settlement-suggestion";
 import { calculateSplits } from "@/utils/expense/split-calculator";
+import { revalidatePath } from "next/cache";
 
 export async function createExpense(createExpenseBody: CreateExpenseBody) {
   try {
@@ -105,51 +102,38 @@ export async function createExpense(createExpenseBody: CreateExpenseBody) {
   }
 }
 
-export async function getSettlementSuggestions(groupId: string) {
+export async function getSettlementSuggestions(
+  groupId: string,
+): Promise<{ error: Error | null; data: SettlementPageData | null }> {
   try {
     const data = await withAuthenticatedUser(async (user) => {
-      const currentMember = await usersRepo.getMemberByUserId(user.id);
-      if (!currentMember) {
-        throw new Error("You are not a member of any group");
-      }
+      return withTransaction(async (tx) => {
+        const expenseRepo = new ExpenseRepo(tx);
+        const groupRepo = new GroupRepo(tx);
 
-      const groupMembers = await groupRepo.getGroupMembers(groupId);
+        const activeMember = await groupRepo.getActiveMember(groupId, user.id);
+        if (!activeMember) {
+          throw new Error("You are not a member of this group");
+        }
 
-      const unsettledPeriods = await expenseRepo.getUnsettledPeriods(groupId);
+        const [groupMembers, periods, rawDebts, rawSettled, rawHistory] =
+          await Promise.all([
+            groupRepo.getGroupMembers(groupId),
+            expenseRepo.getUnsettledPeriods(groupId),
+            expenseRepo.getDebtsPerPairPerPeriod(groupId),
+            expenseRepo.getSettledAmountsPerPairPerPeriod(groupId),
+            expenseRepo.getSettlementHistory(groupId),
+          ]);
 
-      const netBalancePerMember = [];
-      for (const period of unsettledPeriods) {
-        const [totalPaidPerMember, totalOwedPerMember] = await Promise.all([
-          expenseRepo.getTotalPaidPerMember(period.id),
-          expenseRepo.getTotalOwedPerMember(period.id),
-        ]);
-
-        const netBalancePerMemberForPeriod = calculateNetBalancePerMember(
-          totalPaidPerMember,
-          totalOwedPerMember,
-          period,
-          groupMembers,
-        );
-
-        console.log(
-          `totalPaidPerMember: ${JSON.stringify(totalPaidPerMember, null, 2)}, totalOwedPerMember: ${JSON.stringify(totalOwedPerMember, null, 2)}`,
-        );
-        netBalancePerMember.push(...netBalancePerMemberForPeriod);
-      }
-      const creditors = netBalancePerMember
-        .filter((member) => member.netBalance > 0)
-        .sort((a, b) => b.netBalance - a.netBalance);
-      const debtors = netBalancePerMember
-        .filter((member) => member.netBalance < 0)
-        .sort((a, b) => a.netBalance - b.netBalance);
-
-      console.log(
-        ` netBalance: ${JSON.stringify(netBalancePerMember, null, 2)}, creditors: ${JSON.stringify(creditors, null, 2)}, debtors: ${JSON.stringify(debtors, null, 2)}`,
-      );
-
-      const suggestions = calculateSettlementSuggestions(debtors, creditors);
-      console.log({ suggestions });
-      return [];
+        return buildSettlementPageData({
+          currentUserMemberId: activeMember.id,
+          members: groupMembers.map((m) => ({ id: m.id, name: m.name })),
+          periods,
+          rawDebts,
+          rawSettled,
+          rawHistory,
+        });
+      });
     });
 
     return { error: null, data };
@@ -159,5 +143,123 @@ export async function getSettlementSuggestions(groupId: string) {
       error: new Error("something went wrong. Please try again."),
       data: null,
     };
+  }
+}
+
+export async function recordSettlement(body: {
+  groupId: string;
+  periodId: string;
+  fromMemberId: string;
+  toMemberId: string;
+  amount: number;
+  note?: string;
+}): Promise<{ error: Error | null }> {
+  try {
+    await withAuthenticatedUser(async (user) => {
+      return withTransaction(async (tx) => {
+        const expenseRepo = new ExpenseRepo(tx);
+        const groupRepo = new GroupRepo(tx);
+
+        const activeMember = await groupRepo.getActiveMember(
+          body.groupId,
+          user.id,
+        );
+        if (!activeMember) {
+          throw new Error("You are not a member of this group");
+        }
+
+        if (body.periodId === "open") {
+          await distributeSettlementAcrossPeriods(expenseRepo, body);
+        } else {
+          await expenseRepo.createSettlement(body.periodId, [
+            {
+              fromMemberId: body.fromMemberId,
+              toMemberId: body.toMemberId,
+              amount: body.amount.toString(),
+            },
+          ]);
+        }
+      });
+    });
+
+    revalidatePath("/settle");
+    return { error: null };
+  } catch (error) {
+    console.error("[recordSettlement]", error);
+    return {
+      error: new Error("something went wrong. Please try again."),
+    };
+  }
+}
+
+async function distributeSettlementAcrossPeriods(
+  expenseRepo: ExpenseRepo,
+  body: {
+    groupId: string;
+    fromMemberId: string;
+    toMemberId: string;
+    amount: number;
+  },
+) {
+  const [rawDebts, rawSettled, periods] = await Promise.all([
+    expenseRepo.getDebtsPerPairPerPeriod(body.groupId),
+    expenseRepo.getSettledAmountsPerPairPerPeriod(body.groupId),
+    expenseRepo.getUnsettledPeriods(body.groupId),
+  ]);
+
+  const settledMap = new Map<string, number>();
+  for (const s of rawSettled) {
+    const key = `${s.fromMemberId}-${s.toMemberId}-${s.periodId}`;
+    settledMap.set(key, (settledMap.get(key) ?? 0) + Number(s.settledAmount));
+  }
+
+  const pairDebts = rawDebts
+    .filter(
+      (d) =>
+        d.fromMemberId === body.fromMemberId &&
+        d.toMemberId === body.toMemberId,
+    )
+    .map((d) => {
+      const key = `${d.fromMemberId}-${d.toMemberId}-${d.periodId}`;
+      const alreadySettled = settledMap.get(key) ?? 0;
+      return {
+        periodId: d.periodId,
+        outstanding: Math.max(0, Number(d.totalAmount) - alreadySettled),
+      };
+    })
+    .filter((d) => d.outstanding > 0.01);
+
+  const periodMap = new Map(periods.map((p) => [p.id, p]));
+  pairDebts.sort((a, b) => {
+    const pa = periodMap.get(a.periodId);
+    const pb = periodMap.get(b.periodId);
+    if (!pa || !pb) return 0;
+    if (pa.year !== pb.year) return pa.year - pb.year;
+    return pa.month - pb.month;
+  });
+
+  let remaining = body.amount;
+
+  for (const debt of pairDebts) {
+    if (remaining <= 0.01) break;
+    const settleAmount = Math.min(remaining, debt.outstanding);
+    await expenseRepo.createSettlement(debt.periodId, [
+      {
+        fromMemberId: body.fromMemberId,
+        toMemberId: body.toMemberId,
+        amount: settleAmount.toFixed(2),
+      },
+    ]);
+    remaining -= settleAmount;
+  }
+
+  if (remaining > 0.01 && pairDebts.length > 0) {
+    await expenseRepo.createSettlement(pairDebts[0].periodId, [
+      {
+        fromMemberId: body.fromMemberId,
+        toMemberId: body.toMemberId,
+        amount: remaining.toFixed(2),
+      },
+    ]);
   }
 }

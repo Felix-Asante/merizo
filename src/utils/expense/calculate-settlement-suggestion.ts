@@ -1,102 +1,104 @@
-import type { GroupMember } from "@/types/groups";
+import type {
+  PeriodDebt,
+  SettleMember,
+  SettlementPageData,
+  SettlementPeriod,
+  SettlementRecord,
+} from "@/types/settlement";
 
-type TotalPaidPerMember = {
-  memberId: string;
-  memberName: string;
-  totalPaid: string;
-};
-
-type TotalOwedPerMember = {
-  memberId: string;
-  memberName: string;
-  totalOwed: string;
-};
-
-type Period = {
-  month: number;
-  year: number;
-  id: string;
-};
-
-type NetBalancePerMember = {
-  memberId: string;
-  memberName: string;
-  netBalance: number;
-  month: number;
-  year: number;
-};
-
-type SettlementSuggestion = {
+type RawDebt = {
   fromMemberId: string;
-  fromMemberName: string;
   toMemberId: string;
-  toMemberName: string;
-  amount: number;
+  periodId: string;
+  totalAmount: string;
 };
 
-export function calculateNetBalancePerMember(
-  totalPaidPerMember: TotalPaidPerMember[],
-  totalOwedPerMember: TotalOwedPerMember[],
-  period: Period,
-  groupMembers: GroupMember[],
-) {
-  const paidMap = new Map<string, TotalPaidPerMember>();
-  const owedMap = new Map<string, TotalOwedPerMember>();
-  for (const paid of totalPaidPerMember) {
-    paidMap.set(paid.memberId, paid);
-  }
-  for (const owed of totalOwedPerMember) {
-    owedMap.set(owed.memberId, owed);
-  }
-  const netBalancePerMember: NetBalancePerMember[] = [];
+type RawSettled = {
+  fromMemberId: string;
+  toMemberId: string;
+  periodId: string;
+  settledAmount: string;
+};
 
-  for (const member of groupMembers) {
-    const paid = paidMap.get(member.id);
-    const owed = owedMap.get(member.id);
+type RawSettlementRecord = {
+  id: string;
+  fromMemberId: string;
+  toMemberId: string;
+  amount: string;
+  periodId: string;
+  periodYear: number;
+  periodMonth: number;
+  createdAt: Date;
+};
 
-    const totalPaid = paid ? Number(paid.totalPaid) : 0;
-    const totalOwed = owed ? Number(owed.totalOwed) : 0;
-    const netBalance = totalPaid - totalOwed;
+type RawPeriod = {
+  id: string;
+  year: number;
+  month: number;
+  status: "open" | "finalized";
+};
 
-    netBalancePerMember.push({
-      memberId: member.id,
-      memberName: member.name,
-      netBalance: netBalance,
-      month: period.month,
-      year: period.year,
-    });
-  }
-  return netBalancePerMember;
-}
+type RawMember = {
+  id: string;
+  name: string;
+};
 
-export function calculateSettlementSuggestions(
-  debtors: NetBalancePerMember[],
-  creditors: NetBalancePerMember[],
-) {
-  const suggestions: SettlementSuggestion[] = [];
-  let i = 0;
-  let j = 0;
+export function buildSettlementPageData(params: {
+  currentUserMemberId: string;
+  members: RawMember[];
+  periods: RawPeriod[];
+  rawDebts: RawDebt[];
+  rawSettled: RawSettled[];
+  rawHistory: RawSettlementRecord[];
+}): SettlementPageData {
+  const members: SettleMember[] = params.members.map((m) => ({
+    id: m.id,
+    name: m.name,
+    isCurrentUser: m.id === params.currentUserMemberId,
+  }));
 
-  while (i < debtors.length && j < creditors.length) {
-    const debtor = debtors[i];
-    const creditor = creditors[j];
+  const periods: SettlementPeriod[] = params.periods.map((p) => ({
+    id: p.id,
+    year: p.year,
+    month: p.month,
+    status: p.status,
+  }));
 
-    const transfer = Math.min(Math.abs(debtor.netBalance), creditor.netBalance);
-
-    suggestions.push({
-      fromMemberId: debtor.memberId,
-      fromMemberName: debtor.memberName,
-      toMemberId: creditor.memberId,
-      toMemberName: creditor.memberName,
-      amount: Number(transfer.toFixed(2)),
-    });
-
-    debtor.netBalance += transfer; // because it's negative
-    creditor.netBalance -= transfer;
-
-    if (debtor.netBalance <= 0.01) i++;
-    if (creditor.netBalance <= 0.01) j++;
+  const settledMap = new Map<string, number>();
+  for (const s of params.rawSettled) {
+    const key = `${s.fromMemberId}-${s.toMemberId}-${s.periodId}`;
+    settledMap.set(key, (settledMap.get(key) ?? 0) + Number(s.settledAmount));
   }
 
-  return suggestions;
+  const debts: PeriodDebt[] = params.rawDebts.map((d) => {
+    const key = `${d.fromMemberId}-${d.toMemberId}-${d.periodId}`;
+    const settledAmount = settledMap.get(key) ?? 0;
+    return {
+      id: key,
+      fromMemberId: d.fromMemberId,
+      toMemberId: d.toMemberId,
+      periodId: d.periodId,
+      totalAmount: Math.round(Number(d.totalAmount) * 100) / 100,
+      settledAmount: Math.round(settledAmount * 100) / 100,
+    };
+  });
+
+  const settlements: SettlementRecord[] = params.rawHistory.map((h) => ({
+    id: h.id,
+    fromMemberId: h.fromMemberId,
+    toMemberId: h.toMemberId,
+    amount: Math.round(Number(h.amount) * 100) / 100,
+    periodId: h.periodId,
+    periodYear: h.periodYear,
+    periodMonth: h.periodMonth,
+    createdAt: h.createdAt.toISOString(),
+  }));
+
+  return {
+    currentUserMemberId: params.currentUserMemberId,
+    members,
+    periods,
+    debts,
+    settlements,
+  };
 }

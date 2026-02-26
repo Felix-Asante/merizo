@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const manualSettlementSchema = z
   .object({
+    periodId: z.string().min(1, "Select a period"),
     fromId: z.string().min(1, "Select who is paying"),
     toId: z.string().min(1, "Select who is receiving"),
     amount: z.number().positive("Amount must be greater than 0"),

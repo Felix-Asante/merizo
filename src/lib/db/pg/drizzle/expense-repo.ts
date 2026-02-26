@@ -4,9 +4,11 @@ import {
   expense,
   expenseSplit,
   monthlyPeriods,
+  settlements,
+  settlementItems,
 } from "./schemas/expense-schema";
 import type { InferInsertModel } from "drizzle-orm";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { member } from "./schemas/group-schema";
 import { user } from "./schemas/auth-schema";
 
@@ -35,11 +37,12 @@ export class ExpenseRepo {
   }
 
   async getUnsettledPeriods(groupId: string) {
-    const unsettledPeriods = await this.db
+    return this.db
       .select({
         id: monthlyPeriods.id,
         year: monthlyPeriods.year,
         month: monthlyPeriods.month,
+        status: monthlyPeriods.status,
       })
       .from(monthlyPeriods)
       .where(
@@ -48,11 +51,10 @@ export class ExpenseRepo {
           eq(monthlyPeriods.status, "open"),
         ),
       );
-    return unsettledPeriods;
   }
 
   async getTotalPaidPerMember(periodId: string) {
-    const totalPaidPerMember = await this.db
+    return this.db
       .select({
         memberId: expense.paidByUserId,
         memberName: user.name,
@@ -63,11 +65,10 @@ export class ExpenseRepo {
       .innerJoin(user, eq(user.id, member.userId))
       .where(eq(expense.periodId, periodId))
       .groupBy(expense.paidByUserId, user.name);
-    return totalPaidPerMember;
   }
 
   async getTotalOwedPerMember(periodId: string) {
-    const totalOwedPerMember = await this.db
+    return this.db
       .select({
         memberId: expenseSplit.memberId,
         memberName: user.name,
@@ -79,15 +80,15 @@ export class ExpenseRepo {
       .innerJoin(user, eq(user.id, member.userId))
       .where(eq(expense.periodId, periodId))
       .groupBy(expenseSplit.memberId, user.name);
-    return totalOwedPerMember;
   }
 
-  async getUnsettledDebtsForGroup(groupId: string) {
+  async getDebtsPerPairPerPeriod(groupId: string) {
     return this.db
       .select({
         fromMemberId: expenseSplit.memberId,
         toMemberId: expense.paidByUserId,
-        amount: sql<string>`COALESCE(SUM(${expenseSplit.amount}), 0)`,
+        periodId: expense.periodId,
+        totalAmount: sql<string>`COALESCE(SUM(${expenseSplit.amount}), 0)`,
       })
       .from(expenseSplit)
       .innerJoin(expense, eq(expense.id, expenseSplit.expenseId))
@@ -99,7 +100,81 @@ export class ExpenseRepo {
           sql`${expenseSplit.memberId} != ${expense.paidByUserId}`,
         ),
       )
-      .groupBy(expenseSplit.memberId, expense.paidByUserId);
+      .groupBy(expenseSplit.memberId, expense.paidByUserId, expense.periodId);
+  }
+
+  async getSettledAmountsPerPairPerPeriod(groupId: string) {
+    return this.db
+      .select({
+        fromMemberId: settlementItems.fromMemberId,
+        toMemberId: settlementItems.toMemberId,
+        periodId: settlements.periodId,
+        settledAmount:
+          sql<string>`COALESCE(SUM(${settlementItems.amount}), 0)`,
+      })
+      .from(settlementItems)
+      .innerJoin(settlements, eq(settlements.id, settlementItems.settlementId))
+      .innerJoin(monthlyPeriods, eq(monthlyPeriods.id, settlements.periodId))
+      .where(
+        and(
+          eq(monthlyPeriods.organizationId, groupId),
+          eq(monthlyPeriods.status, "open"),
+        ),
+      )
+      .groupBy(
+        settlementItems.fromMemberId,
+        settlementItems.toMemberId,
+        settlements.periodId,
+      );
+  }
+
+  async getSettlementHistory(groupId: string) {
+    return this.db
+      .select({
+        id: settlementItems.id,
+        fromMemberId: settlementItems.fromMemberId,
+        toMemberId: settlementItems.toMemberId,
+        amount: settlementItems.amount,
+        periodId: settlements.periodId,
+        periodYear: monthlyPeriods.year,
+        periodMonth: monthlyPeriods.month,
+        createdAt: settlements.createdAt,
+      })
+      .from(settlementItems)
+      .innerJoin(settlements, eq(settlements.id, settlementItems.settlementId))
+      .innerJoin(monthlyPeriods, eq(monthlyPeriods.id, settlements.periodId))
+      .where(eq(monthlyPeriods.organizationId, groupId))
+      .orderBy(desc(settlements.createdAt));
+  }
+
+  async createSettlement(
+    periodId: string,
+    items: Array<{
+      fromMemberId: string;
+      toMemberId: string;
+      amount: string;
+    }>,
+  ) {
+    const [settlement] = await this.db
+      .insert(settlements)
+      .values({
+        id: crypto.randomUUID(),
+        periodId,
+        createdAt: new Date(),
+      })
+      .returning();
+
+    if (items.length > 0) {
+      await this.db.insert(settlementItems).values(
+        items.map((item) => ({
+          id: crypto.randomUUID(),
+          settlementId: settlement.id,
+          ...item,
+        })),
+      );
+    }
+
+    return settlement;
   }
 }
 

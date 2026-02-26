@@ -5,27 +5,40 @@ import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/ui/base/button";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { cn } from "@/ui/utils";
-import type { SimplifiedDebt } from "@/utils/settlement/debt-simplifier";
-import type { SettleMember } from "./types";
+import {
+  getContextLabel,
+  type SettlementSuggestion,
+} from "@/lib/settlement-engine";
+import type {
+  SettleMember,
+  SettlementContext,
+  SettlementPeriod,
+} from "@/types/settlement";
 
-interface SettlementSuggestionsProps {
-  suggestions: SimplifiedDebt[];
+interface SettlementOptionsProps {
+  suggestions: SettlementSuggestion[];
   members: SettleMember[];
-  currentUserId: string;
-  onSettle: (suggestion: SimplifiedDebt) => void;
+  currentUserMemberId: string;
+  context: SettlementContext;
+  periods: SettlementPeriod[];
+  onSettle: (suggestion: SettlementSuggestion) => void;
 }
 
-export function SettlementSuggestions({
+export function SettlementOptions({
   suggestions,
   members,
-  currentUserId,
+  currentUserMemberId,
+  context,
+  periods,
   onSettle,
-}: SettlementSuggestionsProps) {
+}: SettlementOptionsProps) {
   const getMember = (id: string) => members.find((m) => m.id === id);
   const getName = (id: string) => {
     const m = getMember(id);
     return m?.isCurrentUser ? "You" : (m?.name ?? "Unknown");
   };
+
+  const contextLabel = getContextLabel(context, periods);
 
   if (suggestions.length === 0) {
     return (
@@ -40,22 +53,26 @@ export function SettlementSuggestions({
         </div>
         <p className="text-sm font-semibold mb-1">All settled!</p>
         <p className="text-xs text-muted-foreground">
-          No outstanding debts in this group
+          No outstanding debts
+          {context === "open"
+            ? " across open balances"
+            : ` in ${contextLabel}`}
         </p>
       </motion.section>
     );
   }
 
   const userSuggestions = suggestions.filter(
-    (s) => s.from === currentUserId || s.to === currentUserId,
+    (s) => s.from === currentUserMemberId || s.to === currentUserMemberId,
   );
   const otherSuggestions = suggestions.filter(
-    (s) => s.from !== currentUserId && s.to !== currentUserId,
+    (s) => s.from !== currentUserMemberId && s.to !== currentUserMemberId,
   );
   const sorted = [...userSuggestions, ...otherSuggestions];
 
   return (
     <motion.section
+      key={context}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: 0.05 }}
@@ -71,8 +88,8 @@ export function SettlementSuggestions({
       <div className="space-y-2">
         {sorted.map((suggestion, index) => {
           const isUserInvolved =
-            suggestion.from === currentUserId ||
-            suggestion.to === currentUserId;
+            suggestion.from === currentUserMemberId ||
+            suggestion.to === currentUserMemberId;
 
           return (
             <motion.div
@@ -101,9 +118,14 @@ export function SettlementSuggestions({
                     {getName(suggestion.to)}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  ${suggestion.amount.toFixed(2)}
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-xs text-muted-foreground">
+                    ${suggestion.amount.toFixed(2)}
+                  </p>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted/50 text-muted-foreground">
+                    {contextLabel}
+                  </span>
+                </div>
               </div>
               <Button
                 size="sm"
