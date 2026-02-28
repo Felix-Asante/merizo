@@ -125,3 +125,17 @@ export async function getGroupMembers(groupId: string) {
     return { error: error, data: [] };
   }
 }
+
+export async function getGroupActivity(groupId: string) {
+  try {
+    const activity = await withAuthenticatedUser(async (user) => {
+      const activeMember = await groupRepo.getActiveMember(groupId, user.id);
+      if (!activeMember) throw new Error("You are not a member of this group");
+      return await groupRepo.getRecentActivity(groupId);
+    });
+    return { error: null, data: activity };
+  } catch (error) {
+    logger.error("Failed to get group activity", error as Error);
+    return { error: error, data: [] };
+  }
+}

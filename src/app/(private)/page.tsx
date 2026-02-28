@@ -1,15 +1,31 @@
-import { getSettlementSuggestions } from "@/services/expenses/expense-actions";
 import { getUserGroups } from "@/services/groups/groups-service-server";
+import { getActiveOrganizationId } from "@/lib/auth/server";
+import { getDashboardData } from "@/services/dashboard/dashboard-actions";
 import { DashboardHome } from "@/ui/sections/dashboard/home";
 import { DashboardShimmer } from "@/ui/sections/dashboard/home/dashboard-shimmer";
 import { Suspense } from "react";
 
-export default async function Home() {
-  const { data: groups } = await getUserGroups();
-  await getSettlementSuggestions(groups[0].id);
+async function DashboardLoader() {
+  const [{ data: groups }, activeGroupId] = await Promise.all([
+    getUserGroups(),
+    getActiveOrganizationId(),
+  ]);
+
+  const groupId = activeGroupId ?? groups[0]?.id;
+  let initialData = null;
+
+  if (groupId) {
+    const result = await getDashboardData(groupId);
+    initialData = result.data;
+  }
+
+  return <DashboardHome groups={groups} initialData={initialData} />;
+}
+
+export default function Home() {
   return (
     <Suspense fallback={<DashboardShimmer />}>
-      <DashboardHome groups={groups} />
+      <DashboardLoader />
     </Suspense>
   );
 }

@@ -26,3 +26,15 @@ export type CreateExpenseBody = {
   customSplits: Record<string, number>;
   groupId: string;
 };
+
+export type ActivityItem = {
+  id: string;
+  title: string;
+  amount: number;
+  paidByName: string;
+  paidByMemberId: string;
+  isCurrentUser: boolean;
+  userSplitAmount: number;
+  createdAt: Date;
+  periodStatus: string;
+};
