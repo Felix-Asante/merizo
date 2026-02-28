@@ -6,7 +6,7 @@ export type CurrencyOption = {
   name: string;
 };
 
-export type SplitMethod = "equal" | "exact" | "percentage" | "custom";
+export type SplitMethod = "equal" | "exact" | "percentage";
 
 export type SplitResult = {
   memberId: string;

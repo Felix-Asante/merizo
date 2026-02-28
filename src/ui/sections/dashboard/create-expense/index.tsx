@@ -150,7 +150,8 @@ export function CreateExpense() {
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       logger.error("Failed to add expense", error as Error, {
-        data,
+        ...data,
+        groupId: activeGroup?.id,
         errorMessage,
       });
       toast.error(errorMessage ?? "Failed to add expense. Please try again.");

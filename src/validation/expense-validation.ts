@@ -1,14 +1,23 @@
 import { z } from "zod";
+import { INPUT_REQUIRED_INVALID_ERROR_MESSAGE } from "./validation-helpers";
 
 export const expenseSchema = z
   .object({
-    title: z.string().min(1, "Title is required"),
-    amount: z.number().positive("Amount must be greater than 0"),
-    date: z.string().min(1, "Date is required"),
+    title: z
+      .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .min(1, "Title is required"),
+    amount: z
+      .number(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .positive("Amount must be greater than 0"),
+    date: z
+      .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .min(1, "Date is required"),
     note: z.string().optional(),
-    paidById: z.string().min(1, "Select who paid"),
+    paidById: z
+      .string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE)
+      .min(1, "Select who paid"),
     participantIds: z
-      .array(z.string())
+      .array(z.string(INPUT_REQUIRED_INVALID_ERROR_MESSAGE))
       .min(1, "Select at least one participant"),
     splitMethod: z.enum(["equal", "exact", "percentage"]),
     customSplits: z.record(z.string(), z.number()),

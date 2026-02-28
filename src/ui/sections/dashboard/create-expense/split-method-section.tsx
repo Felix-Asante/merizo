@@ -1,5 +1,5 @@
 "use client";
-
+"use memo";
 import type { GroupMember } from "@/types/groups";
 import { Input } from "@/ui/base/input";
 import { UserAvatar } from "@/ui/shared/avatar";
@@ -9,7 +9,7 @@ import { getSplitTotal } from "@/utils/expense/split-calculator";
 import type { ExpenseFormValues } from "@/validation/expense-validation";
 import { AnimatePresence, motion } from "framer-motion";
 import { SearchIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { SplitMethod } from "@/types";
 import { useCurrentUser } from "@/hooks/api/use-current-user";
@@ -190,12 +190,8 @@ function CustomInputs(props: CustomInputsProps) {
   const isBalanced = Math.abs(total - target) < 0.01;
   const showSearch = participants.length > 6;
 
-  const filtered = useMemo(
-    () =>
-      participants.filter((m) =>
-        m.name.toLowerCase().includes(search.toLowerCase()),
-      ),
-    [participants, search],
+  const filtered = participants.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (

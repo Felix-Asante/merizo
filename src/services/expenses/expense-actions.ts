@@ -26,6 +26,9 @@ export async function createExpense(createExpenseBody: CreateExpenseBody) {
           throw new Error("At least one participant is required");
         }
 
+        const group = await groupRepo.getById(createExpenseBody.groupId);
+        if (!group) throw new Error("Group not found");
+
         const currentUserMember = await usersRepo.getMemberByUserId(user.id);
         if (!currentUserMember) {
           throw new Error("Forbidden: You are not a member of this group");
@@ -45,9 +48,6 @@ export async function createExpense(createExpenseBody: CreateExpenseBody) {
           throw new Error(
             "Forbidden: The paid by user is not a member of this group",
           );
-
-        const group = await groupRepo.getById(createExpenseBody.groupId);
-        if (!group) throw new Error("Group not found");
 
         const expenseDate = new Date(createExpenseBody.date);
 

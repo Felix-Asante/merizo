@@ -1,4 +1,5 @@
 "use client";
+"use memo";
 
 import { useCurrentUser } from "@/hooks/api/use-current-user";
 import type { GroupMember } from "@/types/groups";
@@ -11,7 +12,7 @@ import type { ExpenseFormValues } from "@/validation/expense-validation";
 import { motion } from "framer-motion";
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react";
 import { Popover } from "radix-ui";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { MemberSkimmer } from "./member-skimmer";
 
@@ -32,12 +33,8 @@ export function PaidBySection(props: PaidBySectionProps) {
 
   const payer = members.find((m) => m.id === paidById);
 
-  const filtered = useMemo(
-    () =>
-      members.filter((m) =>
-        m.name.toLowerCase().includes(search.toLowerCase()),
-      ),
-    [members, search],
+  const filtered = members.filter((m) =>
+    m.name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleSelect = (id: string) => {
