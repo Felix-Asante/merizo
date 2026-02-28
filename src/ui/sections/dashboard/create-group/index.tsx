@@ -1,31 +1,34 @@
 "use client";
-
-import { useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
-import { toast } from "sonner";
+"use memo";
+import { setActiveGroupClient } from "@/services/groups/groups-service-client";
+import { createGroup } from "@/services/groups/groups-service-server";
 import { Form } from "@/ui/base/form";
+import { generateRandomString, slugify } from "@/utils";
+import { generateGroupCode } from "@/utils/group/code-generator";
 import {
   createGroupSchema,
   type CreateGroupFormValues,
 } from "@/validation/group-validation";
-import { generateGroupCode } from "@/utils/group/code-generator";
-import { GroupNavbar } from "./group-navbar";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { GroupDetailsSection } from "./group-details-section";
+import { GroupNavbar } from "./group-navbar";
 import { InviteMembersSection } from "./invite-members-section";
 import { CreateGroupSubmitButton } from "./submit-button";
-import { createGroup } from "@/services/groups/groups-service-server";
-import { useMutation } from "@tanstack/react-query";
-import { generateRandomString, slugify } from "@/utils";
-import { setActiveGroupClient } from "@/services/groups/groups-service-client";
+import { Logger } from "@/lib/logger";
+
+const logger = new Logger("CreateGroupPage");
 
 export function CreateGroup() {
   const router = useRouter();
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const groupCode = useMemo(() => generateGroupCode(), []);
+  const groupCode = generateGroupCode();
 
   const form = useForm<CreateGroupFormValues>({
     resolver: zodResolver(createGroupSchema),
@@ -43,16 +46,22 @@ export function CreateGroup() {
   });
 
   const handleSubmit = async (data: CreateGroupFormValues) => {
+    const slug =
+      `${slugify(data.name)}-${generateRandomString(4)}`.toLowerCase();
+    const payload = {
+      name: data.name,
+      slug: slug,
+      inviteCode: groupCode,
+      currency: data.currency,
+      type: data.type,
+    };
     try {
-      const result = await createGroupMutation.mutateAsync({
-        name: data.name,
-        slug: `${slugify(data.name)}-${generateRandomString(4)}`.toLowerCase(),
-        inviteCode: groupCode,
-        currency: data.currency,
-        type: data.type,
-      });
+      const result = await createGroupMutation.mutateAsync(payload);
       if (result.error || !result.success) {
         toast.error("Failed to create group. Please try again.");
+        logger.error("Failed to create group", result.error as Error, {
+          payload,
+        });
         return;
       }
       setIsSuccess(true);
@@ -64,8 +73,9 @@ export function CreateGroup() {
       setTimeout(() => {
         router.push("/");
       }, 1200);
-    } catch {
+    } catch (error) {
       toast.error("Failed to create group. Please try again.");
+      logger.error("Failed to create group", error as Error, { payload });
     }
   };
 

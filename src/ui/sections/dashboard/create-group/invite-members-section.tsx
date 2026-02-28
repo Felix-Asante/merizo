@@ -9,6 +9,7 @@ import { Button } from "@/ui/base/button";
 import { GroupCodeDisplay } from "@/ui/shared/group-code-display";
 import { toast } from "sonner";
 import type { CreateGroupFormValues } from "@/validation/group-validation";
+import { REGEX_PATTERNS } from "@/validation/validation-helpers";
 
 interface InviteMembersSectionProps {
   groupCode: string;
@@ -24,7 +25,7 @@ export function InviteMembersSection({ groupCode }: InviteMembersSectionProps) {
     const email = emailInput.trim().toLowerCase();
     if (!email) return;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!REGEX_PATTERNS.Email.test(email)) {
       setEmailError("Please enter a valid email");
       return;
     }
@@ -53,7 +54,7 @@ export function InviteMembersSection({ groupCode }: InviteMembersSectionProps) {
   };
 
   const handleShareLink = async () => {
-    const link = `${window.location.origin}/join?code=${groupCode}`;
+    const link = `${location.origin}/join?code=${groupCode}`;
     await navigator.clipboard.writeText(link);
     toast.success("Invite link copied!");
   };
