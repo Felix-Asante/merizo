@@ -1,25 +1,24 @@
 "use client";
 
+import { useCurrentUser } from "@/hooks/api/use-current-user";
+import { buttonVariants } from "@/ui/base/button";
+import { Separator } from "@/ui/base/separator";
+import { AppBrand } from "@/ui/shared/app-brand";
+import { UserAvatar } from "@/ui/shared/avatar";
+import { cn } from "@/ui/utils";
 import {
-  HomeIcon,
-  UsersIcon,
   ActivityIcon,
-  UserIcon,
-  SettingsIcon,
   BellIcon,
+  HomeIcon,
   PlusIcon,
+  SettingsIcon,
+  UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/ui/utils";
-import { AppBrand } from "@/ui/shared/app-brand";
-import { UserAvatar } from "@/ui/shared/avatar";
-import { Button, buttonVariants } from "@/ui/base/button";
-import { Separator } from "@/ui/base/separator";
 
 const navItems = [
   { href: "/", icon: HomeIcon, label: "Home" },
-  { href: "/groups", icon: UsersIcon, label: "Groups" },
   { href: "/activity", icon: ActivityIcon, label: "Activity" },
   { href: "/profile", icon: UserIcon, label: "Profile" },
   { href: "/settings", icon: SettingsIcon, label: "Settings" },
@@ -27,6 +26,8 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+
+  const { currentUser } = useCurrentUser();
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 border-r border-border/50 bg-card p-4">
@@ -66,11 +67,13 @@ export function Sidebar() {
       <Separator className="my-4" />
 
       <div className="flex items-center gap-3 px-2">
-        <UserAvatar name="Felix User" size="sm" />
+        <UserAvatar name={currentUser?.name ?? ""} size="sm" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">Felix User</p>
+          <p className="text-sm font-medium truncate">
+            {currentUser?.name ?? ""}
+          </p>
           <p className="text-xs text-muted-foreground truncate">
-            felix@example.com
+            {currentUser?.email ?? ""}
           </p>
         </div>
         <button className="relative p-2 rounded-lg hover:bg-accent transition-colors">
