@@ -8,7 +8,7 @@ import { UsersRepo } from "@/lib/db/pg/drizzle/users-repo";
 import type { CreateExpenseBody } from "@/types/expenses";
 import type { SettlementPageData } from "@/types/settlement";
 import { buildSettlementPageData } from "@/utils/expense/calculate-settlement-suggestion";
-import { calculateSplits } from "@/utils/expense/split-calculator";
+import { calculateSplits, normalizeSplitsToTotal } from "@/utils/expense/split-calculator";
 import { revalidatePath } from "next/cache";
 
 export async function createExpense(createExpenseBody: CreateExpenseBody) {
@@ -80,9 +80,12 @@ export async function createExpense(createExpenseBody: CreateExpenseBody) {
           createExpenseBody.splitMethod,
           createExpenseBody.customSplits,
         );
-
+        const normalizedSplits = normalizeSplitsToTotal(
+          splits,
+          createExpenseBody.amount,
+        );
         const newExpense = await expenseRepo.create(newExpenseBody);
-        const expenseSplits = splits.map((split) => ({
+        const expenseSplits = normalizedSplits.map((split) => ({
           id: crypto.randomUUID(),
           expenseId: newExpense.id,
           memberId: split.memberId,
@@ -222,9 +225,13 @@ async function distributeSettlementAcrossPeriods(
     .map((d) => {
       const key = `${d.fromMemberId}-${d.toMemberId}-${d.periodId}`;
       const alreadySettled = settledMap.get(key) ?? 0;
+      const total = Number(d.totalAmount);
+      const outstanding = Math.round(
+        Math.max(0, total - alreadySettled) * 100,
+      ) / 100;
       return {
         periodId: d.periodId,
-        outstanding: Math.max(0, Number(d.totalAmount) - alreadySettled),
+        outstanding,
       };
     })
     .filter((d) => d.outstanding > 0.01);
@@ -238,28 +245,41 @@ async function distributeSettlementAcrossPeriods(
     return pa.month - pb.month;
   });
 
-  let remaining = body.amount;
+  // Batch amounts by period so one payment produces one settlement per period
+  const amountByPeriod = new Map<string, number>();
+  let remaining = Math.round(body.amount * 100) / 100;
 
   for (const debt of pairDebts) {
     if (remaining <= 0.01) break;
-    const settleAmount = Math.min(remaining, debt.outstanding);
-    await expenseRepo.createSettlement(debt.periodId, [
-      {
-        fromMemberId: body.fromMemberId,
-        toMemberId: body.toMemberId,
-        amount: settleAmount.toFixed(2),
-      },
-    ]);
-    remaining -= settleAmount;
+    const settleAmount = Math.round(
+      Math.min(remaining, debt.outstanding) * 100,
+    ) / 100;
+    if (settleAmount < 0.01) continue;
+    amountByPeriod.set(
+      debt.periodId,
+      (amountByPeriod.get(debt.periodId) ?? 0) + settleAmount,
+    );
+    remaining = Math.round((remaining - settleAmount) * 100) / 100;
   }
 
+  // If there's leftover (e.g. overpayment or single period with debt < payment), add to first period
   if (remaining > 0.01 && pairDebts.length > 0) {
-    await expenseRepo.createSettlement(pairDebts[0].periodId, [
-      {
-        fromMemberId: body.fromMemberId,
-        toMemberId: body.toMemberId,
-        amount: remaining.toFixed(2),
-      },
+    const firstPeriodId = pairDebts[0].periodId;
+    amountByPeriod.set(
+      firstPeriodId,
+      (amountByPeriod.get(firstPeriodId) ?? 0) + remaining,
+    );
+  }
+
+  const item = {
+    fromMemberId: body.fromMemberId,
+    toMemberId: body.toMemberId,
+  };
+  for (const [periodId, totalAmount] of amountByPeriod) {
+    const amount = Math.round(totalAmount * 100) / 100;
+    if (amount < 0.01) continue;
+    await expenseRepo.createSettlement(periodId, [
+      { ...item, amount: amount.toFixed(2) },
     ]);
   }
 }

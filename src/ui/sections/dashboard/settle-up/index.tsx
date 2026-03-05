@@ -1,26 +1,27 @@
 "use client";
+"use memo";
 
-import { useState, useMemo, useCallback } from "react";
-import { motion } from "framer-motion";
-import { PlusIcon } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/ui/base/button";
 import {
-  getContextDebts,
   computeUserBalance,
   generateSuggestions,
+  getContextDebts,
   type SettlementSuggestion,
 } from "@/lib/settlement-engine";
 import { recordSettlement } from "@/services/expenses/expense-actions";
+import type { SettlementContext, SettlementPageData } from "@/types/settlement";
+import { Button } from "@/ui/base/button";
 import type { ManualSettlementFormValues } from "@/validation/settlement-validation";
-import type { SettlementPageData, SettlementContext } from "@/types/settlement";
-import { SettleNavbar } from "./settle-navbar";
-import { PeriodSelector } from "./period-selector";
-import { SettlementOverviewCard } from "./settlement-overview-card";
-import { SettlementOptions } from "./settlement-options";
-import { SettleModal } from "./settle-modal";
+import { motion } from "framer-motion";
+import { PlusIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { ManualSettlementModal } from "./manual-settlement-modal";
+import { PeriodSelector } from "./period-selector";
+import { SettleModal } from "./settle-modal";
+import { SettleNavbar } from "./settle-navbar";
 import { SettlementHistory } from "./settlement-history";
+import { SettlementOptions } from "./settlement-options";
+import { SettlementOverviewCard } from "./settlement-overview-card";
 
 interface SettleUpProps {
   settlementData: SettlementPageData;
@@ -31,78 +32,70 @@ export function SettleUp({ settlementData, groupId }: SettleUpProps) {
   const { currentUserMemberId, members, periods, debts, settlements } =
     settlementData;
 
-  const [context, setContext] = useState<SettlementContext>("open");
+  const defaultContext =
+    periods.find(
+      (p) =>
+        p.month === new Date().getMonth() &&
+        p.year === new Date().getFullYear(),
+    )?.id ?? periods[0].id;
+
+  const [context, setContext] = useState<SettlementContext>(defaultContext);
   const [confirmTarget, setConfirmTarget] =
     useState<SettlementSuggestion | null>(null);
   const [manualModalOpen, setManualModalOpen] = useState(false);
 
-  const contextDebts = useMemo(
-    () => getContextDebts(debts, context),
-    [debts, context],
-  );
+  const contextDebts = getContextDebts(debts, context);
 
-  const balance = useMemo(
-    () => computeUserBalance(contextDebts, currentUserMemberId),
-    [contextDebts, currentUserMemberId],
-  );
+  const balance = computeUserBalance(contextDebts, currentUserMemberId);
 
-  const suggestions = useMemo(
-    () => generateSuggestions(contextDebts),
-    [contextDebts],
-  );
+  const suggestions = generateSuggestions(contextDebts);
 
-  const handleOpenConfirm = useCallback((suggestion: SettlementSuggestion) => {
+  const handleOpenConfirm = (suggestion: SettlementSuggestion) => {
     setConfirmTarget(suggestion);
-  }, []);
+  };
 
-  const handleSettleSuggestion = useCallback(
-    async (
-      suggestion: SettlementSuggestion,
-      amount: number,
-      note: string,
-    ) => {
-      const periodId = context === "open" ? "open" : context;
-      if (!periodId) return;
+  const handleSettleSuggestion = async (
+    suggestion: SettlementSuggestion,
+    amount: number,
+    note: string,
+  ) => {
+    const periodId = context === "open" ? "open" : context;
+    if (!periodId) return;
 
-      const result = await recordSettlement({
-        groupId,
-        periodId,
-        fromMemberId: suggestion.from,
-        toMemberId: suggestion.to,
-        amount,
-        note: note || undefined,
-      });
+    const result = await recordSettlement({
+      groupId,
+      periodId,
+      fromMemberId: suggestion.from,
+      toMemberId: suggestion.to,
+      amount,
+      note: note || undefined,
+    });
 
-      if (result.error) {
-        toast.error(result.error.message);
-        throw result.error;
-      }
+    if (result.error) {
+      toast.error(result.error.message);
+      throw result.error;
+    }
 
-      toast.success("Settlement recorded!");
-    },
-    [groupId, context],
-  );
+    toast.success("Settlement recorded!");
+  };
 
-  const handleManualSettle = useCallback(
-    async (data: ManualSettlementFormValues) => {
-      const result = await recordSettlement({
-        groupId,
-        periodId: data.periodId,
-        fromMemberId: data.fromId,
-        toMemberId: data.toId,
-        amount: data.amount,
-        note: data.note || undefined,
-      });
+  const handleManualSettle = async (data: ManualSettlementFormValues) => {
+    const result = await recordSettlement({
+      groupId,
+      periodId: data.periodId,
+      fromMemberId: data.fromId,
+      toMemberId: data.toId,
+      amount: data.amount,
+      note: data.note || undefined,
+    });
 
-      if (result.error) {
-        toast.error(result.error.message);
-        throw result.error;
-      }
+    if (result.error) {
+      toast.error(result.error.message);
+      throw result.error;
+    }
 
-      toast.success("Settlement recorded!");
-    },
-    [groupId],
-  );
+    toast.success("Settlement recorded!");
+  };
 
   return (
     <motion.div

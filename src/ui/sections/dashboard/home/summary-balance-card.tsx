@@ -34,7 +34,7 @@ export function SummaryBalanceCard({
             <WalletIcon className="size-4 text-primary" />
           </div>
           <p className="text-sm font-medium text-muted-foreground">
-            Total expenses
+            Total balance
           </p>
         </div>
 

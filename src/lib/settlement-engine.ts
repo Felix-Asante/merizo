@@ -40,10 +40,7 @@ export type SettlementSuggestion = {
   amount: number;
 };
 
-export type PeriodSettlementStatus =
-  | "open"
-  | "partially_settled"
-  | "settled";
+export type PeriodSettlementStatus = "open" | "partially_settled" | "settled";
 
 export function formatPeriodLabel(year: number, month: number): string {
   return `${MONTH_NAMES[month]} ${year}`;
@@ -66,12 +63,15 @@ export function getContextDebts(
   const filtered =
     context === "open" ? debts : debts.filter((d) => d.periodId === context);
 
-  const outstanding = filtered.map((d) => ({
-    from: d.fromMemberId,
-    to: d.toMemberId,
-    amount: d.totalAmount - d.settledAmount,
-    periodId: d.periodId,
-  }));
+  const outstanding = filtered.map((d) => {
+    const amount = Math.round((d.totalAmount - d.settledAmount) * 100) / 100;
+    return {
+      from: d.fromMemberId,
+      to: d.toMemberId,
+      amount: amount > 0 ? amount : 0,
+      periodId: d.periodId,
+    };
+  });
 
   if (context === "open") {
     // Aggregate BEFORE filtering so over-settled periods offset under-settled ones
@@ -170,10 +170,7 @@ export function getPeriodSettlementStatus(
   if (periodDebts.length === 0) return "settled";
 
   const totalDebt = periodDebts.reduce((sum, d) => sum + d.totalAmount, 0);
-  const totalSettled = periodDebts.reduce(
-    (sum, d) => sum + d.settledAmount,
-    0,
-  );
+  const totalSettled = periodDebts.reduce((sum, d) => sum + d.settledAmount, 0);
 
   if (totalSettled >= totalDebt - EPSILON) return "settled";
   if (totalSettled > EPSILON) return "partially_settled";
@@ -188,10 +185,7 @@ export function getSettlementProgress(
   if (periodDebts.length === 0) return 100;
 
   const totalDebt = periodDebts.reduce((sum, d) => sum + d.totalAmount, 0);
-  const totalSettled = periodDebts.reduce(
-    (sum, d) => sum + d.settledAmount,
-    0,
-  );
+  const totalSettled = periodDebts.reduce((sum, d) => sum + d.settledAmount, 0);
 
   if (totalDebt < EPSILON) return 100;
   return Math.min(100, Math.round((totalSettled / totalDebt) * 100));

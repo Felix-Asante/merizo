@@ -43,14 +43,18 @@ type RawMember = {
   name: string;
 };
 
-export function buildSettlementPageData(params: {
+type BuildSettlementPageDataParams = {
   currentUserMemberId: string;
   members: RawMember[];
   periods: RawPeriod[];
   rawDebts: RawDebt[];
   rawSettled: RawSettled[];
   rawHistory: RawSettlementRecord[];
-}): SettlementPageData {
+};
+
+export function buildSettlementPageData(
+  params: BuildSettlementPageDataParams,
+): SettlementPageData {
   const members: SettleMember[] = params.members.map((m) => ({
     id: m.id,
     name: m.name,
@@ -72,14 +76,19 @@ export function buildSettlementPageData(params: {
 
   const debts: PeriodDebt[] = params.rawDebts.map((d) => {
     const key = `${d.fromMemberId}-${d.toMemberId}-${d.periodId}`;
-    const settledAmount = settledMap.get(key) ?? 0;
+    const rawSettled = settledMap.get(key) ?? 0;
+    const totalAmount = Math.round(Number(d.totalAmount) * 100) / 100;
+    const settledAmount = Math.min(
+      Math.round(rawSettled * 100) / 100,
+      totalAmount,
+    );
     return {
       id: key,
       fromMemberId: d.fromMemberId,
       toMemberId: d.toMemberId,
       periodId: d.periodId,
-      totalAmount: Math.round(Number(d.totalAmount) * 100) / 100,
-      settledAmount: Math.round(settledAmount * 100) / 100,
+      totalAmount,
+      settledAmount,
     };
   });
 

@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Merizo
+
+**Shared household expense tracking.** Track shared expenses and bills with your household or friends—simple, secure, and free.
+
+---
+
+## Features
+
+- **Groups** — Create groups, invite via code, switch between households
+- **Expenses** — Add expenses with custom splits (equal, exact amounts, percentages)
+- **Settle up** — View who owes whom and record settlements
+- **Activity** — Timeline of expenses and settlements per group
+- **Auth** — Email/password signup and login via [Better Auth](https://www.better-auth.com/)
+
+---
+
+## Tech Stack
+
+| Layer        | Choice |
+|-------------|--------|
+| Framework   | [Next.js 16](https://nextjs.org/) (App Router) |
+| UI          | [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/), [Radix UI](https://www.radix-ui.com/) / [shadcn/ui](https://ui.shadcn.com/) |
+| Data        | [Drizzle ORM](https://orm.drizzle.team/) + [PostgreSQL](https://www.postgresql.org/) |
+| Auth        | [Better Auth](https://www.better-auth.com/) (Drizzle adapter, organization plugin) |
+| State / API | [TanStack Query](https://tanstack.com/query/latest), Server Actions |
+| Forms       | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) |
+| Animations  | [Framer Motion](https://www.framer.com/motion/) |
+
+---
+
+## Prerequisites
+
+- **Node.js** 18+ (or [Bun](https://bun.sh/) — project uses `bun.lock`)
+- **PostgreSQL** 14+
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone and install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo-url>
+cd merizo
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env` file in the project root:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Required: PostgreSQL connection string
+DATABASE_URL=postgresql://user:password@localhost:5432/merizo
 
-## Learn More
+# Required: Base URL for Better Auth (use your app URL in production)
+NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+For local development, `NEXT_PUBLIC_BETTER_AUTH_URL` should match the URL you use to run the app (e.g. `http://localhost:3000`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Database
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Apply the schema and (optionally) open Drizzle Studio:
 
-## Deploy on Vercel
+```bash
+bun run db:push
+bun run db:studio   # optional: browse data at https://local.drizzle.studio
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Run the app
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+bun run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Sign up, create a group, and add expenses.
+
+---
+
+## Scripts
+
+| Command        | Description |
+|----------------|-------------|
+| `bun run dev`  | Start Next.js dev server |
+| `bun run build`| Production build |
+| `bun run start`| Start production server |
+| `bun run lint` | Run ESLint |
+| `bun run db:push`    | Push schema to DB (no migration files) |
+| `bun run db:generate`| Generate migrations from schema |
+| `bun run db:migrate` | Run migrations |
+| `bun run db:studio`  | Open Drizzle Studio |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (public)/           # Login, signup
+│   ├── (private)/          # Dashboard, expenses, settle, activity, groups
+│   └── api/                # API routes (e.g. auth)
+├── config/                 # App config (name, meta)
+├── lib/                    # Core infra
+│   ├── auth/               # Better Auth server + client
+│   ├── db/pg/              # Drizzle client + schemas
+│   └── tanstack-query/     # Query options / keys
+├── services/               # Server actions & business logic
+│   ├── auth/               # Auth-related actions
+│   ├── expenses/           # Expense CRUD + splits
+│   ├── groups/             # Group CRUD + membership
+│   ├── dashboard/          # Dashboard data
+│   ├── activity/           # Activity feed
+│   └── settle/             # Settlements
+├── ui/                     # UI layer
+│   ├── base/               # Primitives (Button, Input, Card, etc.)
+│   ├── shared/             # Layouts, nav, providers, avatars
+│   └── sections/           # Feature-specific sections (dashboard, auth, etc.)
+├── hooks/                  # React hooks (e.g. API hooks)
+├── types/                  # Shared TypeScript types
+├── validation/             # Zod schemas (auth, expenses, groups)
+└── utils/                  # Helpers, errors, cache
+```
+
+---
+
+## Deployment
+
+- **Database** — Use a managed PostgreSQL instance (e.g. Vercel Postgres, Neon, Supabase, RDS).
+- **App** — Build with `bun run build` and run `bun run start`, or deploy to [Vercel](https://vercel.com/) (recommended for Next.js).
+- **Env** — Set `DATABASE_URL` and `NEXT_PUBLIC_BETTER_AUTH_URL` to your production URL.
+
+---
+
+## License
+
+Private. All rights reserved.
