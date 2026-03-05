@@ -11,8 +11,7 @@ import {
   BellIcon,
   HomeIcon,
   PlusIcon,
-  SettingsIcon,
-  UserIcon,
+  HandCoinsIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,8 +19,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/", icon: HomeIcon, label: "Home" },
   { href: "/activity", icon: ActivityIcon, label: "Activity" },
-  { href: "/profile", icon: UserIcon, label: "Profile" },
-  { href: "/settings", icon: SettingsIcon, label: "Settings" },
+  { href: "/settle", icon: HandCoinsIcon, label: "Settle Up" },
 ];
 
 export function Sidebar() {
