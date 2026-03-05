@@ -5,7 +5,7 @@ import { InboxIcon } from "lucide-react";
 import { ActivityItem } from "@/ui/sections/dashboard/home/activity-item";
 import { Separator } from "@/ui/base/separator";
 import { Button } from "@/ui/base/button";
-import type { ActivityItem as ActivityItemType } from "@/services/dashboard/dashboard-actions";
+import type { ActivityItem as ActivityItemType } from "@/types/expenses";
 
 interface ActivityListProps {
   activities: ActivityItemType[];

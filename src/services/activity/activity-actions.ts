@@ -3,7 +3,7 @@
 import { withAuthenticatedUser } from "@/lib/auth/server";
 import { groupRepo } from "@/lib/db/pg/drizzle/group-repo";
 import { Logger } from "@/lib/logger";
-import type { ActivityItem } from "@/services/dashboard/dashboard-actions";
+import type { ActivityItem } from "@/types/expenses";
 
 const logger = new Logger("ActivityActions");
 
@@ -38,8 +38,18 @@ export interface ActivityPageData {
 }
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 export async function getActivityPageData(

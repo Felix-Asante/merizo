@@ -12,7 +12,7 @@ import {
   getActivityPageData,
   type ActivityPageData,
 } from "@/services/activity/activity-actions";
-import type { ActivityItem } from "@/services/dashboard/dashboard-actions";
+import type { ActivityItem } from "@/types/expenses";
 
 interface ActivityPageProps {
   groupId: string;

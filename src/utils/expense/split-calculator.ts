@@ -1,10 +1,6 @@
 import type { SplitMethod, SplitResult, SplitPreviewItem } from "@/types";
 import type { GroupMember } from "@/types/groups";
 
-/**
- * Rounds each split to 2 decimals and adjusts so the sum equals totalAmount.
- * Puts any rounding difference on the largest share to avoid phantom debt.
- */
 export function normalizeSplitsToTotal(
   splits: SplitResult[],
   totalAmount: number,
@@ -17,9 +13,9 @@ export function normalizeSplitsToTotal(
   const sum = rounded.reduce((acc, s) => acc + s.amount, 0);
   const diff = Math.round((totalAmount - sum) * 100) / 100;
   if (Math.abs(diff) < 0.01) return rounded;
-  const idx = rounded.reduce((best, s, i) =>
+  const idx = rounded.reduce<number>((best, s, i) =>
     s.amount >= (rounded[best]?.amount ?? 0) ? i : best,
-  );
+  0);
   rounded[idx] = {
     ...rounded[idx],
     amount: Math.round((rounded[idx].amount + diff) * 100) / 100,
