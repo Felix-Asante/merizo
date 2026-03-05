@@ -113,7 +113,7 @@ export function DashboardHome({ groups, initialData }: DashboardHomeProps) {
     return (
       <>
         <NoGroupView
-          onCreateGroup={() => router.push("/create-group")}
+          onCreateGroup={() => router.push("/groups/create")}
           onJoinGroup={() => setJoinModalOpen(true)}
         />
         <JoinGroupModal
