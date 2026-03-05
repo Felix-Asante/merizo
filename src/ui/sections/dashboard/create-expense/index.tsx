@@ -47,7 +47,7 @@ export function CreateExpense() {
     defaultValues: {
       title: "",
       amount: 0,
-      date: new Date().toISOString().split("T")[0],
+      date: "",
       note: "",
       paidById: currentUserMember?.id ?? "",
       participantIds: members.map((m) => m.id),
@@ -55,6 +55,15 @@ export function CreateExpense() {
       customSplits: {},
     },
   });
+
+  useEffect(() => {
+    if (!form.getValues("date")) {
+      form.setValue(
+        "date",
+        new Date().toISOString().split("T")[0],
+      );
+    }
+  }, [form]);
 
   const createExpenseMutation = useMutation({
     mutationFn: createExpense,

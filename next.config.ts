@@ -10,7 +10,6 @@ const nextConfig: NextConfig = {
   reactCompiler: {
     compilationMode: "annotation",
   },
-  cacheComponents: true,
 };
 
 export default nextConfig;

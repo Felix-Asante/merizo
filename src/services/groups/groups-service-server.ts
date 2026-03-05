@@ -2,18 +2,16 @@
 
 import { auth } from "@/lib/auth";
 import { withAuthenticatedUser } from "@/lib/auth/server";
-import { Logger } from "@/lib/logger";
 import { groupRepo } from "@/lib/db/pg/drizzle/group-repo";
+import { Logger } from "@/lib/logger";
 import type { CreateGroupBody } from "@/types/groups";
 import { getGroupMembersTag, getUserGroupsTag } from "@/utils/cache";
-import { cacheTag, revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 
 const logger = new Logger("GroupServiceServer");
 
 async function getCachedUserGroups(userId: string) {
-  "use cache";
-  cacheTag(getUserGroupsTag(userId));
   return groupRepo.getUserGroups(userId);
 }
 

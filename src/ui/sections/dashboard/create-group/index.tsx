@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { GroupDetailsSection } from "./group-details-section";
@@ -27,8 +27,11 @@ const logger = new Logger("CreateGroupPage");
 export function CreateGroup() {
   const router = useRouter();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [groupCode, setGroupCode] = useState("");
 
-  const groupCode = generateGroupCode();
+  useEffect(() => {
+    setGroupCode(generateGroupCode());
+  }, []);
 
   const form = useForm<CreateGroupFormValues>({
     resolver: zodResolver(createGroupSchema),
@@ -46,12 +49,13 @@ export function CreateGroup() {
   });
 
   const handleSubmit = async (data: CreateGroupFormValues) => {
+    const code = groupCode || generateGroupCode();
     const slug =
       `${slugify(data.name)}-${generateRandomString(4)}`.toLowerCase();
     const payload = {
       name: data.name,
       slug: slug,
-      inviteCode: groupCode,
+      inviteCode: code,
       currency: data.currency,
       type: data.type,
     };
