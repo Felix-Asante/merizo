@@ -6,13 +6,7 @@ import { Separator } from "@/ui/base/separator";
 import { AppBrand } from "@/ui/shared/app-brand";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { cn } from "@/ui/utils";
-import {
-  ActivityIcon,
-  BellIcon,
-  HomeIcon,
-  PlusIcon,
-  HandCoinsIcon,
-} from "lucide-react";
+import { ActivityIcon, HandCoinsIcon, HomeIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./logout-button";
@@ -78,10 +72,6 @@ export function Sidebar() {
           className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           iconClassName="size-4"
         />
-        <button className="relative p-2 rounded-lg hover:bg-accent transition-colors">
-          <BellIcon className="size-4 text-muted-foreground" />
-          <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-destructive" />
-        </button>
       </div>
     </aside>
   );
