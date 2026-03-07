@@ -124,6 +124,31 @@ export async function getGroupMembers(groupId: string) {
   }
 }
 
+export async function ensureDefaultGroup(): Promise<void> {
+  try {
+    await withAuthenticatedUser(async (user) => {
+      const session = await auth.api.getSession({
+        headers: await headers(),
+      });
+      const activeId =
+        (session?.session as { activeOrganizationId?: string })
+          ?.activeOrganizationId ?? null;
+      if (activeId) return;
+
+      const groups = await getCachedUserGroups(user.id);
+      if (groups.length === 0) return;
+
+      await auth.api.setActiveOrganization({
+        body: { organizationId: groups[0].id },
+        headers: await headers(),
+      });
+    });
+  } catch (error) {
+    logger.error("Failed to ensure default group", error as Error);
+    // Ignore errors
+  }
+}
+
 export async function getGroupActivity(groupId: string) {
   try {
     const activity = await withAuthenticatedUser(async (user) => {

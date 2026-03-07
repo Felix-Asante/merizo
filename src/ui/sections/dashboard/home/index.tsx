@@ -18,7 +18,7 @@ import { InviteMembersModal } from "@/ui/shared/invite-members-modal";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ActivityFeed } from "./activity-feed";
 import { DashboardShimmer } from "./dashboard-shimmer";
@@ -46,11 +46,21 @@ export function DashboardHome({ groups, initialData }: DashboardHomeProps) {
     initialData,
   );
   const [error, setError] = useState<string | null>(null);
+  const hasSyncedDefaultGroup = useRef(false);
 
   useEffect(() => {
     setDashboardData(initialData);
     setError(null);
   }, [initialData]);
+
+  useEffect(() => {
+    if (groups.length === 0 || activeGroup?.id || hasSyncedDefaultGroup.current)
+      return;
+    hasSyncedDefaultGroup.current = true;
+    setActiveGroupClient(groups[0].id).catch(() => {
+      hasSyncedDefaultGroup.current = false;
+    });
+  }, [groups, activeGroup?.id]);
 
   const fetchDashboardData = async (groupId: string) => {
     setError(null);
