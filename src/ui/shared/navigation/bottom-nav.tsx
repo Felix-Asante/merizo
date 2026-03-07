@@ -1,22 +1,22 @@
 "use client";
 
+import { cn } from "@/ui/utils";
+import { motion } from "framer-motion";
 import {
-  HomeIcon,
-  UsersIcon,
   ActivityIcon,
-  UserIcon,
+  HandCoinsIcon,
+  HomeIcon,
   PlusIcon,
+  UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { cn } from "@/ui/utils";
 
 const tabs = [
   { href: "/", icon: HomeIcon, label: "Home" },
   { href: "/groups", icon: UsersIcon, label: "Groups" },
   { href: "/activity", icon: ActivityIcon, label: "Activity" },
-  { href: "/profile", icon: UserIcon, label: "Profile" },
+  { href: "/settle", icon: HandCoinsIcon, label: "Settle Up" },
 ];
 
 export function BottomNav() {

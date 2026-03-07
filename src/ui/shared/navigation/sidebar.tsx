@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogoutButton } from "./logout-button";
 
 const navItems = [
   { href: "/", icon: HomeIcon, label: "Home" },
@@ -24,7 +25,6 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-
   const { currentUser } = useCurrentUser();
 
   return (
@@ -64,7 +64,7 @@ export function Sidebar() {
 
       <Separator className="my-4" />
 
-      <div className="flex items-center gap-3 px-2">
+      <div className="flex items-center gap-2 px-2">
         <UserAvatar name={currentUser?.name ?? ""} size="sm" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">
@@ -74,6 +74,10 @@ export function Sidebar() {
             {currentUser?.email ?? ""}
           </p>
         </div>
+        <LogoutButton
+          className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          iconClassName="size-4"
+        />
         <button className="relative p-2 rounded-lg hover:bg-accent transition-colors">
           <BellIcon className="size-4 text-muted-foreground" />
           <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-destructive" />
