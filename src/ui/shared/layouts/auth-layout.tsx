@@ -59,14 +59,14 @@ export function AuthLayout({
         </div>
 
         {/* Privacy link */}
-        <div className="mt-6 text-center">
+        {/* <div className="mt-6 text-center">
           <Link
             href="/privacy"
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Privacy Policy
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );
