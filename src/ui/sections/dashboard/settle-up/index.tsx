@@ -37,7 +37,7 @@ export function SettleUp({ settlementData, groupId }: SettleUpProps) {
       (p) =>
         p.month === new Date().getMonth() &&
         p.year === new Date().getFullYear(),
-    )?.id ?? periods[0].id;
+    )?.id ?? periods[0]?.id;
 
   const [context, setContext] = useState<SettlementContext>(defaultContext);
   const [confirmTarget, setConfirmTarget] =
