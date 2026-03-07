@@ -58,12 +58,9 @@ export function CreateExpense() {
 
   useEffect(() => {
     if (!form.getValues("date")) {
-      form.setValue(
-        "date",
-        new Date().toISOString().split("T")[0],
-      );
+      form.setValue("date", new Date().toISOString().split("T")[0]);
     }
-  }, [form]);
+  }, []);
 
   const createExpenseMutation = useMutation({
     mutationFn: createExpense,
@@ -102,20 +99,23 @@ export function CreateExpense() {
       });
     }
     form.setValue("customSplits", splits);
-  }, [splitMethod, participantIds, amount, form]);
+  }, [splitMethod, amount, participantIds?.slice().sort().join(",") ?? ""]);
 
   useEffect(() => {
     if (currentUserMember?.id) {
       form.setValue("paidById", currentUserMember.id);
     }
-  }, [currentUserMember]);
+  }, [currentUserMember?.id]);
 
   useEffect(() => {
-    form.setValue(
-      "participantIds",
-      members.map((m) => m.id),
-    );
-  }, [members]);
+    const ids = members.map((m) => m.id);
+    form.setValue("participantIds", ids);
+  }, [
+    members
+      .map((m) => m.id)
+      .sort()
+      .join(","),
+  ]);
 
   const handleSubmit = async (data: ExpenseFormValues) => {
     try {
