@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRightIcon, ChevronDownIcon } from "lucide-react";
 import { cn } from "@/ui/utils";
 import { UserAvatar } from "@/ui/shared/avatar";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 import { calculatePreview } from "@/utils/expense/split-calculator";
 import type { ExpenseFormValues } from "@/validation/expense-validation";
 import type { GroupMember } from "@/types/groups";
@@ -25,6 +26,7 @@ export function SplitPreview({ members, currentUserId }: SplitPreviewProps) {
   const splitMethod = watch("splitMethod");
   const customSplits = watch("customSplits");
   const [expanded, setExpanded] = useState(false);
+  const { symbol } = useActiveCurrency();
 
   if (amount <= 0 || !participantIds?.length) return null;
 
@@ -63,7 +65,10 @@ export function SplitPreview({ members, currentUserId }: SplitPreviewProps) {
         <span className="text-sm font-medium">
           {payerIsCurrentUser ? "You" : payer?.name} paid
         </span>
-        <span className="ml-auto text-sm font-bold">${amount.toFixed(2)}</span>
+        <span className="ml-auto text-sm font-bold">
+          {symbol}
+          {amount.toFixed(2)}
+        </span>
       </div>
 
       <div className="space-y-2">
@@ -83,7 +88,8 @@ export function SplitPreview({ members, currentUserId }: SplitPreviewProps) {
                   : "text-red-400",
               )}
             >
-              ${item.share.toFixed(2)}
+              {symbol}
+              {item.share.toFixed(2)}
             </span>
           </div>
         ))}

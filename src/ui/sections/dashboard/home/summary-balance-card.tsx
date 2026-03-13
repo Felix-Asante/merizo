@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowDownLeftIcon, ArrowUpRightIcon, WalletIcon } from "lucide-react";
 import { cn } from "@/ui/utils";
 import { AnimatedNumber } from "@/ui/shared/animated-number";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 
 interface SummaryBalanceCardProps {
   totalBalance: number;
@@ -16,6 +17,7 @@ export function SummaryBalanceCard({
   youOwe,
   youAreOwed,
 }: SummaryBalanceCardProps) {
+  const { symbol } = useActiveCurrency();
   const isPositive = totalBalance >= 0;
 
   return (
@@ -55,7 +57,8 @@ export function SummaryBalanceCard({
             <div>
               <p className="text-xs text-muted-foreground">You owe</p>
               <p className="text-sm font-semibold text-red-400">
-                ${youOwe.toFixed(2)}
+                {symbol}
+                {youOwe.toFixed(2)}
               </p>
             </div>
           </div>
@@ -66,7 +69,8 @@ export function SummaryBalanceCard({
             <div>
               <p className="text-xs text-muted-foreground">You are owed</p>
               <p className="text-sm font-semibold text-emerald-400">
-                ${youAreOwed.toFixed(2)}
+                {symbol}
+                {youAreOwed.toFixed(2)}
               </p>
             </div>
           </div>

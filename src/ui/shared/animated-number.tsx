@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
-export function AnimatedNumber({ value }: { value: number }) {
+interface AnimatedNumberProps {
+  value: number;
+  symbol?: string;
+}
+
+export function AnimatedNumber({ value, symbol = "$" }: AnimatedNumberProps) {
   const [displayed, setDisplayed] = useState(0);
 
   useEffect(() => {
@@ -17,5 +22,11 @@ export function AnimatedNumber({ value }: { value: number }) {
     requestAnimationFrame(animate);
   }, [value]);
 
-  return <span>${Math.abs(displayed).toFixed(2)}</span>;
+  return (
+    <span>
+      {symbol}
+      {Math.abs(displayed).toFixed(2)}
+    </span>
+  );
 }
+

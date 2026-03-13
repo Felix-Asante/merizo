@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { SplitMethod } from "@/types";
 import { useCurrentUser } from "@/hooks/api/use-current-user";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 
 const SPLIT_METHOD_OPTIONS: { value: SplitMethod; label: string }[] = [
   { value: "equal", label: "Equal" },
@@ -143,6 +144,7 @@ export function SplitMethodSection({ members }: SplitMethodSectionProps) {
 }
 
 function EqualPreview({ amount, count }: { amount: number; count: number }) {
+  const { symbol } = useActiveCurrency();
   if (count === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-4">
@@ -155,7 +157,10 @@ function EqualPreview({ amount, count }: { amount: number; count: number }) {
 
   return (
     <div className="text-center py-4">
-      <p className="text-2xl font-bold">${share.toFixed(2)}</p>
+      <p className="text-2xl font-bold">
+        {symbol}
+        {share.toFixed(2)}
+      </p>
       <p className="text-sm text-muted-foreground mt-1">
         per person &middot; {count} {count === 1 ? "person" : "people"}
       </p>
@@ -185,6 +190,7 @@ function CustomInputs(props: CustomInputsProps) {
     onDistribute,
   } = props;
   const { currentUser } = useCurrentUser();
+  const { symbol } = useActiveCurrency();
 
   const [search, setSearch] = useState("");
   const isBalanced = Math.abs(total - target) < 0.01;
@@ -210,7 +216,10 @@ function CustomInputs(props: CustomInputsProps) {
             isBalanced ? "text-emerald-400" : "text-destructive",
           )}
         >
-          {suffix === "$" ? `$${total.toFixed(2)}` : `${total.toFixed(1)}%`} /{" "}
+          {suffix === "$"
+            ? `${symbol}${total.toFixed(2)}`
+            : `${total.toFixed(1)}%`}{" "}
+          /{" "}
           {targetLabel}
         </span>
       </div>

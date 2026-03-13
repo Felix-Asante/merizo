@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { TrendingDownIcon, TrendingUpIcon, ScaleIcon } from "lucide-react";
 import { cn } from "@/ui/utils";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 import type { UserBalance } from "@/lib/settlement-engine";
 import {
   getContextLabel,
@@ -29,6 +30,7 @@ export function SettlementOverviewCard({
   periods,
   debts,
 }: SettlementOverviewCardProps) {
+  const { symbol } = useActiveCurrency();
   const isOwing = balance.net < 0;
   const isOwed = balance.net > 0;
   const isBalanced = Math.abs(balance.net) < 0.01;
@@ -77,7 +79,8 @@ export function SettlementOverviewCard({
                 isBalanced && "text-blue-400",
               )}
             >
-              ${Math.abs(balance.net).toFixed(2)}
+              {symbol}
+              {Math.abs(balance.net).toFixed(2)}
             </p>
           </div>
         </div>
@@ -106,13 +109,15 @@ export function SettlementOverviewCard({
         <div className="rounded-xl bg-background/50 p-3">
           <p className="text-xs text-muted-foreground mb-0.5">You owe</p>
           <p className="text-sm font-semibold text-red-400">
-            ${balance.youOwe.toFixed(2)}
+            {symbol}
+            {balance.youOwe.toFixed(2)}
           </p>
         </div>
         <div className="rounded-xl bg-background/50 p-3">
           <p className="text-xs text-muted-foreground mb-0.5">Owed to you</p>
           <p className="text-sm font-semibold text-emerald-400">
-            ${balance.youAreOwed.toFixed(2)}
+            {symbol}
+            {balance.youAreOwed.toFixed(2)}
           </p>
         </div>
       </div>

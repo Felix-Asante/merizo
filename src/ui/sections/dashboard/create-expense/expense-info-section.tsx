@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { FormField, FormItem, FormMessage } from "@/ui/base/form";
 import FormInput from "@/ui/shared/inputs/form-input";
 import type { ExpenseFormValues } from "@/validation/expense-validation";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 
 export function ExpenseInfoSection() {
   return (
@@ -35,6 +36,7 @@ export function ExpenseInfoSection() {
 function AmountInput() {
   const { control } = useFormContext<ExpenseFormValues>();
   const [display, setDisplay] = useState("");
+  const { symbol } = useActiveCurrency();
 
   return (
     <FormField
@@ -44,7 +46,7 @@ function AmountInput() {
         <FormItem>
           <div className="flex items-center justify-center gap-1 py-6">
             <span className="text-4xl font-bold text-muted-foreground/40">
-              $
+              {symbol}
             </span>
             <input
               type="text"

@@ -1,5 +1,6 @@
 import { cn } from "@/ui/utils";
 import { UserAvatar } from "@/ui/shared/avatar";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 
 export interface ActivityItemProps {
   id: string;
@@ -38,6 +39,7 @@ export function ActivityItem({
   const displayAmount = isCurrentUser
     ? amount - userSplitAmount
     : -userSplitAmount;
+  const { symbol } = useActiveCurrency();
 
   return (
     <div className="flex items-center gap-3 py-3">
@@ -63,7 +65,9 @@ export function ActivityItem({
                 : "text-red-400",
           )}
         >
-          {displayAmount >= 0 ? "+" : "-"}${Math.abs(displayAmount).toFixed(2)}
+          {displayAmount >= 0 ? "+" : "-"}
+          {symbol}
+          {Math.abs(displayAmount).toFixed(2)}
         </p>
         <span
           className={cn(

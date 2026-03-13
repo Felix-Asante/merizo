@@ -7,6 +7,7 @@ import { cn } from "@/ui/utils";
 import { UserAvatar } from "@/ui/shared/avatar";
 import { formatPeriodLabel } from "@/lib/settlement-engine";
 import type { SettleMember, SettlementRecord } from "@/types/settlement";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 
 interface SettlementHistoryProps {
   settlements: SettlementRecord[];
@@ -17,6 +18,7 @@ export function SettlementHistory({
   settlements,
   members,
 }: SettlementHistoryProps) {
+  const { symbol } = useActiveCurrency();
   const [expanded, setExpanded] = useState(false);
 
   const getMember = (id: string) => members.find((m) => m.id === id);
@@ -98,7 +100,8 @@ export function SettlementHistory({
                     </div>
                   </div>
                   <span className="text-sm font-semibold text-emerald-400">
-                    ${record.amount.toFixed(2)}
+                    {symbol}
+                    {record.amount.toFixed(2)}
                   </span>
                 </div>
               ))}

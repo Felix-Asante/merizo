@@ -15,6 +15,7 @@ import { UserAvatar } from "@/ui/shared/avatar";
 import { BottomSheet } from "@/ui/shared/bottom-sheet";
 import { useMediaQuery } from "@/ui/hooks/use-media-query";
 import { cn } from "@/ui/utils";
+import { useActiveCurrency } from "@/hooks/use-active-currency";
 import type { SettlementSuggestion } from "@/lib/settlement-engine";
 import type { SettleMember } from "@/types/settlement";
 
@@ -43,6 +44,7 @@ export function SettleModal({
   const [isPartial, setIsPartial] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
   const [note, setNote] = useState("");
+  const { symbol } = useActiveCurrency();
 
   const getMember = (id: string) => members.find((m) => m.id === id);
   const getName = (id: string) => {
@@ -121,7 +123,8 @@ export function SettleModal({
               <div className="flex flex-col items-center gap-1">
                 <ArrowRightIcon className="size-5 text-muted-foreground" />
                 <span className="text-lg font-bold text-primary">
-                  ${suggestion.amount.toFixed(2)}
+                  {symbol}
+                  {suggestion.amount.toFixed(2)}
                 </span>
               </div>
               <div className="flex flex-col items-center gap-1.5">
@@ -149,7 +152,8 @@ export function SettleModal({
                     : "bg-card border-border/50 text-muted-foreground hover:bg-accent",
                 )}
               >
-                Full (${suggestion.amount.toFixed(2)})
+                Full ({symbol}
+                {suggestion.amount.toFixed(2)})
               </button>
               <button
                 type="button"
@@ -177,7 +181,7 @@ export function SettleModal({
                   <div className="space-y-2">
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
-                        $
+                        {symbol}
                       </span>
                       <Input
                         type="text"
@@ -194,7 +198,8 @@ export function SettleModal({
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Max: ${suggestion.amount.toFixed(2)}
+                      Max: {symbol}
+                      {suggestion.amount.toFixed(2)}
                     </p>
                   </div>
                 </motion.div>
@@ -219,7 +224,7 @@ export function SettleModal({
                   Settling...
                 </>
               ) : (
-                `Settle $${settlementAmount.toFixed(2)}`
+                `Settle ${symbol}${settlementAmount.toFixed(2)}`
               )}
             </Button>
           </motion.div>
