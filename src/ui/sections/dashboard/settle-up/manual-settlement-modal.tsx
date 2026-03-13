@@ -263,7 +263,7 @@ function AmountField() {
           <FormLabel>Amount</FormLabel>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
-              {symbol}
+              {symbol} &nbsp;
             </span>
             <Input
               type="text"

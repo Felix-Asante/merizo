@@ -46,7 +46,7 @@ export function SummaryBalanceCard({
             isPositive ? "text-emerald-400" : "text-red-400",
           )}
         >
-          <AnimatedNumber value={Math.abs(totalBalance)} />
+          <AnimatedNumber value={Math.abs(totalBalance)} symbol={symbol} />
         </p>
 
         <div className="grid grid-cols-2 gap-3">

@@ -25,8 +25,8 @@ export function AnimatedNumber({ value, symbol = "$" }: AnimatedNumberProps) {
   return (
     <span>
       {symbol}
+      &nbsp;
       {Math.abs(displayed).toFixed(2)}
     </span>
   );
 }
-

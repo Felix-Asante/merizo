@@ -158,7 +158,7 @@ function EqualPreview({ amount, count }: { amount: number; count: number }) {
   return (
     <div className="text-center py-4">
       <p className="text-2xl font-bold">
-        {symbol}
+        {symbol} &nbsp;
         {share.toFixed(2)}
       </p>
       <p className="text-sm text-muted-foreground mt-1">
@@ -219,8 +219,7 @@ function CustomInputs(props: CustomInputsProps) {
           {suffix === "$"
             ? `${symbol}${total.toFixed(2)}`
             : `${total.toFixed(1)}%`}{" "}
-          /{" "}
-          {targetLabel}
+          / {targetLabel}
         </span>
       </div>
 

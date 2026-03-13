@@ -79,7 +79,7 @@ export function SettlementOverviewCard({
                 isBalanced && "text-blue-400",
               )}
             >
-              {symbol}
+              {symbol} &nbsp;
               {Math.abs(balance.net).toFixed(2)}
             </p>
           </div>
@@ -109,14 +109,14 @@ export function SettlementOverviewCard({
         <div className="rounded-xl bg-background/50 p-3">
           <p className="text-xs text-muted-foreground mb-0.5">You owe</p>
           <p className="text-sm font-semibold text-red-400">
-            {symbol}
+            {symbol} &nbsp;
             {balance.youOwe.toFixed(2)}
           </p>
         </div>
         <div className="rounded-xl bg-background/50 p-3">
           <p className="text-xs text-muted-foreground mb-0.5">Owed to you</p>
           <p className="text-sm font-semibold text-emerald-400">
-            {symbol}
+            {symbol} &nbsp;
             {balance.youAreOwed.toFixed(2)}
           </p>
         </div>
