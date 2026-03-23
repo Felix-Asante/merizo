@@ -57,7 +57,7 @@ export function SummaryBalanceCard({
             <div>
               <p className="text-xs text-muted-foreground">You owe</p>
               <p className="text-sm font-semibold text-red-400">
-                {symbol}
+                {symbol} &nbsp;
                 {youOwe.toFixed(2)}
               </p>
             </div>
@@ -69,7 +69,7 @@ export function SummaryBalanceCard({
             <div>
               <p className="text-xs text-muted-foreground">You are owed</p>
               <p className="text-sm font-semibold text-emerald-400">
-                {symbol}
+                {symbol} &nbsp;
                 {youAreOwed.toFixed(2)}
               </p>
             </div>
