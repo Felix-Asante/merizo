@@ -8,9 +8,10 @@ interface BottomSheetProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
-export function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, title, children, footer }: BottomSheetProps) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -45,7 +46,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
             onDragEnd={(_, info) => {
               if (info.offset.y > 100) onClose();
             }}
-            className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[85vh] overflow-hidden"
+            className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col"
           >
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
@@ -55,9 +56,10 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
                 <h3 className="text-base font-semibold">{title}</h3>
               </div>
             )}
-            <div className="overflow-y-auto max-h-[calc(85vh-60px)] pb-8">
+            <div className="overflow-y-auto max-h-[calc(85vh-60px)] pb-8 min-h-0 flex-1">
               {children}
             </div>
+            {footer && <div className="shrink-0">{footer}</div>}
           </motion.div>
         </div>
       )}

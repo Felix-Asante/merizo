@@ -176,6 +176,50 @@ export class ExpenseRepo {
 
     return settlement;
   }
+
+  async getExpenseDetails(expenseId: string) {
+    const [row] = await this.db
+      .select({
+        id: expense.id,
+        title: expense.title,
+        note: expense.note,
+        amount: expense.amount,
+        splitType: expense.splitType,
+        organizationId: expense.organizationId,
+        createdAt: expense.createdAt,
+        expenseDate: expense.expenseDate,
+        paidByMemberId: expense.paidByUserId,
+        paidByName: user.name,
+        periodId: expense.periodId,
+        periodYear: monthlyPeriods.year,
+        periodMonth: monthlyPeriods.month,
+        periodStatus: monthlyPeriods.status,
+      })
+      .from(expense)
+      .innerJoin(member, eq(member.id, expense.paidByUserId))
+      .innerJoin(user, eq(user.id, member.userId))
+      .innerJoin(monthlyPeriods, eq(monthlyPeriods.id, expense.periodId))
+      .where(eq(expense.id, expenseId));
+
+    return row ?? null;
+  }
+
+  async getExpenseSplits(expenseId: string) {
+    return this.db
+      .select({
+        memberId: expenseSplit.memberId,
+        memberName: user.name,
+        amount: expenseSplit.amount,
+      })
+      .from(expenseSplit)
+      .innerJoin(member, eq(member.id, expenseSplit.memberId))
+      .innerJoin(user, eq(user.id, member.userId))
+      .where(eq(expenseSplit.expenseId, expenseId));
+  }
+
+  async deleteExpense(expenseId: string) {
+    await this.db.delete(expense).where(eq(expense.id, expenseId));
+  }
 }
 
 export const expenseRepo = new ExpenseRepo(db);

@@ -1,14 +1,17 @@
 "use server";
-
 import { withAuthenticatedUser } from "@/lib/auth/server";
 import { ExpenseRepo } from "@/lib/db/pg/drizzle/expense-repo";
 import { GroupRepo } from "@/lib/db/pg/drizzle/group-repo";
 import { withTransaction } from "@/lib/db/pg/drizzle/transaction";
 import { UsersRepo } from "@/lib/db/pg/drizzle/users-repo";
-import type { CreateExpenseBody } from "@/types/expenses";
+import type { CreateExpenseBody, ExpenseDetails } from "@/types/expenses";
 import type { SettlementPageData } from "@/types/settlement";
+import { canDeleteExpense } from "@/utils/permissions";
 import { buildSettlementPageData } from "@/utils/expense/calculate-settlement-suggestion";
-import { calculateSplits, normalizeSplitsToTotal } from "@/utils/expense/split-calculator";
+import {
+  calculateSplits,
+  normalizeSplitsToTotal,
+} from "@/utils/expense/split-calculator";
 import { revalidatePath } from "next/cache";
 
 export async function createExpense(createExpenseBody: CreateExpenseBody) {
@@ -195,6 +198,105 @@ export async function recordSettlement(body: {
   }
 }
 
+export async function getExpenseDetails(
+  groupId: string,
+  expenseId: string,
+): Promise<{ error: string | null; data: ExpenseDetails | null }> {
+  try {
+    const data = await withAuthenticatedUser(async (user) => {
+      return withTransaction(async (tx) => {
+        const expenseRepo = new ExpenseRepo(tx);
+        const groupRepo = new GroupRepo(tx);
+
+        const activeMember = await groupRepo.getActiveMember(groupId, user.id);
+        if (!activeMember)
+          throw new Error("You are not a member of this group");
+
+        const row = await expenseRepo.getExpenseDetails(expenseId);
+        if (!row || row.organizationId !== groupId) return null;
+
+        const splits = await expenseRepo.getExpenseSplits(expenseId);
+
+        return {
+          id: row.id,
+          title: row.title,
+          note: row.note,
+          amount: Number(row.amount),
+          splitType: row.splitType,
+          organizationId: row.organizationId,
+          createdAt: row.createdAt.toISOString(),
+          expenseDate: row.expenseDate.toISOString(),
+          paidByMemberId: row.paidByMemberId,
+          paidByName: row.paidByName,
+          periodId: row.periodId,
+          periodYear: row.periodYear,
+          periodMonth: row.periodMonth,
+          periodStatus: row.periodStatus,
+          participants: splits.map((s) => ({
+            memberId: s.memberId,
+            name: s.memberName,
+            amount: Number(s.amount),
+          })),
+          canDelete: canDeleteExpense(
+            row.paidByMemberId,
+            activeMember.id,
+            row.periodStatus,
+          ),
+        } satisfies ExpenseDetails;
+      });
+    });
+    return { error: null, data: data ?? null };
+  } catch (error) {
+    console.error("[getExpenseDetails]", error);
+    return { error: "Failed to load expense details", data: null };
+  }
+}
+
+export async function deleteExpense(
+  groupId: string,
+  expenseId: string,
+): Promise<{ error: string | null }> {
+  try {
+    await withAuthenticatedUser(async (user) => {
+      return withTransaction(async (tx) => {
+        const expenseRepo = new ExpenseRepo(tx);
+        const groupRepo = new GroupRepo(tx);
+
+        const activeMember = await groupRepo.getActiveMember(groupId, user.id);
+        if (!activeMember)
+          throw new Error("You are not a member of this group");
+
+        const row = await expenseRepo.getExpenseDetails(expenseId);
+        if (!row || row.organizationId !== groupId) {
+          throw new Error("Expense not found");
+        }
+
+        if (
+          !canDeleteExpense(
+            row.paidByMemberId,
+            activeMember.id,
+            row.periodStatus,
+          )
+        ) {
+          throw new Error("You do not have permission to delete this expense");
+        }
+
+        await expenseRepo.deleteExpense(expenseId);
+      });
+    });
+
+    revalidatePath("/activity");
+    revalidatePath("/");
+    revalidatePath("/settle");
+    return { error: null };
+  } catch (error) {
+    console.error("[deleteExpense]", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to delete expense";
+    return { error: message };
+  }
+}
+
 async function distributeSettlementAcrossPeriods(
   expenseRepo: ExpenseRepo,
   body: {
@@ -226,9 +328,8 @@ async function distributeSettlementAcrossPeriods(
       const key = `${d.fromMemberId}-${d.toMemberId}-${d.periodId}`;
       const alreadySettled = settledMap.get(key) ?? 0;
       const total = Number(d.totalAmount);
-      const outstanding = Math.round(
-        Math.max(0, total - alreadySettled) * 100,
-      ) / 100;
+      const outstanding =
+        Math.round(Math.max(0, total - alreadySettled) * 100) / 100;
       return {
         periodId: d.periodId,
         outstanding,
@@ -251,9 +352,8 @@ async function distributeSettlementAcrossPeriods(
 
   for (const debt of pairDebts) {
     if (remaining <= 0.01) break;
-    const settleAmount = Math.round(
-      Math.min(remaining, debt.outstanding) * 100,
-    ) / 100;
+    const settleAmount =
+      Math.round(Math.min(remaining, debt.outstanding) * 100) / 100;
     if (settleAmount < 0.01) continue;
     amountByPeriod.set(
       debt.periodId,

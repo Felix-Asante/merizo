@@ -11,6 +11,7 @@ export interface ActivityItemProps {
   userSplitAmount: number;
   createdAt: Date;
   periodStatus: string;
+  onClick?: (id: string) => void;
 }
 
 function formatRelativeDate(date: Date): string {
@@ -27,6 +28,7 @@ function formatRelativeDate(date: Date): string {
 }
 
 export function ActivityItem({
+  id,
   title,
   amount,
   paidByName,
@@ -34,6 +36,7 @@ export function ActivityItem({
   userSplitAmount,
   createdAt,
   periodStatus,
+  onClick,
 }: ActivityItemProps) {
   const isSettled = periodStatus === "finalized";
   const displayAmount = isCurrentUser
@@ -42,7 +45,11 @@ export function ActivityItem({
   const { symbol } = useActiveCurrency();
 
   return (
-    <div className="flex items-center gap-3 py-3">
+    <button
+      type="button"
+      onClick={() => onClick?.(id)}
+      className="flex items-center gap-3 py-3 w-full text-left hover:bg-accent/30 -mx-4 px-4 transition-colors cursor-pointer"
+    >
       <UserAvatar name={paidByName} size="sm" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
@@ -80,6 +87,6 @@ export function ActivityItem({
           {isSettled ? "Settled" : "Pending"}
         </span>
       </div>
-    </div>
+    </button>
   );
 }

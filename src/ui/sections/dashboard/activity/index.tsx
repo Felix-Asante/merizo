@@ -1,6 +1,6 @@
 "use client";
-
-import { useState, useCallback, useEffect, useTransition } from "react";
+"use memo";
+import { useState, useEffect, useTransition } from "react";
 import { motion } from "framer-motion";
 import { AlertCircleIcon } from "lucide-react";
 import { Skeleton } from "@/ui/base/skeleton";
@@ -8,6 +8,7 @@ import { Button } from "@/ui/base/button";
 import { ActivityNavbar } from "./activity-navbar";
 import { ActivityFilters } from "./activity-filters";
 import { ActivityList } from "./activity-list";
+import { ActivityDetails } from "./expense-details/activity-details";
 import {
   getActivityPageData,
   type ActivityPageData,
@@ -30,6 +31,11 @@ export function ActivityPage({ groupId, initialData }: ActivityPageProps) {
   const [pageSize] = useState(initialData.pageSize);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(
+    null,
+  );
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
   const [memberId, setMemberId] = useState<string | undefined>();
   const [periodId, setPeriodId] = useState<string | undefined>();
   const [search, setSearch] = useState("");
@@ -40,28 +46,25 @@ export function ActivityPage({ groupId, initialData }: ActivityPageProps) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchActivities = useCallback(
-    (overrides: { page?: number } = {}) => {
-      startTransition(async () => {
-        setError(null);
-        const result = await getActivityPageData(groupId, {
-          memberId,
-          periodId,
-          search: debouncedSearch || undefined,
-          page: overrides.page ?? 1,
-        });
-
-        if (result.error || !result.data) {
-          setError(result.error ?? "Failed to load activities");
-        } else {
-          setActivities(result.data.activities);
-          setTotal(result.data.total);
-          setPage(result.data.page);
-        }
+  const fetchActivities = (overrides: { page?: number } = {}) => {
+    startTransition(async () => {
+      setError(null);
+      const result = await getActivityPageData(groupId, {
+        memberId,
+        periodId,
+        search: debouncedSearch || undefined,
+        page: overrides.page ?? 1,
       });
-    },
-    [groupId, memberId, periodId, debouncedSearch],
-  );
+
+      if (result.error || !result.data) {
+        setError(result.error ?? "Failed to load activities");
+      } else {
+        setActivities(result.data.activities);
+        setTotal(result.data.total);
+        setPage(result.data.page);
+      }
+    });
+  };
 
   useEffect(() => {
     fetchActivities({ page: 1 });
@@ -70,6 +73,20 @@ export function ActivityPage({ groupId, initialData }: ActivityPageProps) {
   const handlePageChange = (newPage: number) => {
     fetchActivities({ page: newPage });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleItemClick = (id: string) => {
+    setSelectedExpenseId(id);
+    setDetailsOpen(true);
+  };
+
+  const handleDetailsClose = () => {
+    setDetailsOpen(false);
+    setSelectedExpenseId(null);
+  };
+
+  const handleDeleted = () => {
+    fetchActivities({ page });
   };
 
   return (
@@ -125,8 +142,17 @@ export function ActivityPage({ groupId, initialData }: ActivityPageProps) {
           pageSize={pageSize}
           isLoading={isPending}
           onPageChange={handlePageChange}
+          onItemClick={handleItemClick}
         />
       )}
+
+      <ActivityDetails
+        open={detailsOpen}
+        onClose={handleDetailsClose}
+        expenseId={selectedExpenseId}
+        groupId={groupId}
+        onDeleted={handleDeleted}
+      />
     </motion.div>
   );
 }

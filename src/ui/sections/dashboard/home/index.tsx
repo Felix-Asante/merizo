@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ActivityFeed } from "./activity-feed";
+import { ActivityDetails } from "../activity/expense-details/activity-details";
 import { DashboardShimmer } from "./dashboard-shimmer";
 import { GroupSwitcher } from "./group-switcher";
 import { JoinGroupModal } from "./join-group-modal";
@@ -46,6 +47,10 @@ export function DashboardHome({ groups, initialData }: DashboardHomeProps) {
     initialData,
   );
   const [error, setError] = useState<string | null>(null);
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(
+    null,
+  );
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const hasSyncedDefaultGroup = useRef(false);
 
   useEffect(() => {
@@ -214,7 +219,13 @@ export function DashboardHome({ groups, initialData }: DashboardHomeProps) {
               activeGroupId={activeGroup?.id!}
               onInvite={() => setInviteModalOpen(true)}
             />
-            <ActivityFeed activities={dashboardData.activities} />
+            <ActivityFeed
+              activities={dashboardData.activities}
+              onItemClick={(id) => {
+                setSelectedExpenseId(id);
+                setDetailsOpen(true);
+              }}
+            />
           </motion.div>
         ) : (
           <DashboardShimmer key="loading" />
@@ -233,6 +244,25 @@ export function DashboardHome({ groups, initialData }: DashboardHomeProps) {
           onClose={() => setInviteModalOpen(false)}
           groupName={activeGroup?.name ?? ""}
           inviteCode={activeGroup?.inviteCode ?? ""}
+        />
+      )}
+
+      {activeGroup && (
+        <ActivityDetails
+          open={detailsOpen}
+          onClose={() => {
+            setDetailsOpen(false);
+            setSelectedExpenseId(null);
+          }}
+          expenseId={selectedExpenseId}
+          groupId={activeGroup.id}
+          onDeleted={() => {
+            if (activeGroup.id) {
+              startTransition(async () => {
+                await fetchDashboardData(activeGroup.id);
+              });
+            }
+          }}
         />
       )}
     </motion.div>

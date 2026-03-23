@@ -14,6 +14,7 @@ interface ActivityListProps {
   pageSize: number;
   isLoading: boolean;
   onPageChange: (page: number) => void;
+  onItemClick?: (id: string) => void;
 }
 
 export function ActivityList({
@@ -23,6 +24,7 @@ export function ActivityList({
   pageSize,
   isLoading,
   onPageChange,
+  onItemClick,
 }: ActivityListProps) {
   const totalPages = Math.ceil(total / pageSize);
   const hasMore = page < totalPages;
@@ -66,7 +68,7 @@ export function ActivityList({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.03 }}
           >
-            <ActivityItem {...activity} />
+            <ActivityItem {...activity} onClick={onItemClick} />
             {index < activities.length - 1 && <Separator />}
           </motion.div>
         ))}
